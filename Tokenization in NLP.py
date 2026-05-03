@@ -1,5 +1,6 @@
 # Word-Level Tokenizer:
 
+print("Word Level Tokenizer: ")
 def word_tokenize(text):
     return text.split()
 
@@ -27,3 +28,38 @@ def encode(tokens, vocab):
 
 encoded = encode(tokens, vocab)
 print(encoded)
+
+#-----------------------------------------------------------------------#
+
+print()
+print("Character Level Tokenization: ")
+# Character-Level Tokenization
+
+def char_tokenize(text):
+    return list(text)
+
+text = "Hello I am Jagjeet"
+tokens = char_tokenize(text)
+print(tokens)
+
+def char_vocab(tokens):
+    char_store = {}
+    for token in tokens:
+        if token not in char_store:
+            char_store[token] = len(char_store)
+    return char_store
+
+chars = char_vocab(tokens)
+print(chars)
+
+def encode(tokens, vocab):
+    return [vocab[token] for token in tokens]
+
+encoded = encode(tokens, chars)
+print(encoded)
+
+#---------------------------------------------------------------------#
+# SUBWORD TOKENIZATION
+
+print()
+print("SUBWORD TOKENIZATION: ")

@@ -63,3 +63,32 @@ print(encoded)
 
 print()
 print("SUBWORD TOKENIZATION: ")
+print("Byte Pair Tokenization: ")
+
+# Step 0: Initialize (Character Level): We split into characters and add end token:
+
+def get_vocab(corpus):
+    vocab = {}
+    for word in corpus:
+        tokens = list(word) + ['</w>']
+        key = tuple(tokens)
+        vocab[key] = vocab.get(key, 0) + 1
+    return vocab
+
+list_corpus = ['low','lowest','newer','wider']
+vocab_list = get_vocab(list_corpus)
+print(vocab_list)
+
+# STEP 1 — Count Pair Frequencies:
+
+from collections import defaultdict
+def get_pairs(vocab):
+    pairs = defaultdict(int)
+
+    for word, freq in vocab.items():
+        for i in range(len(word) - 1):
+            pairs[(word[i], word[i+1])] += freq
+
+    return pairs
+pairs_list = get_pairs(vocab_list)
+print(pairs_list)

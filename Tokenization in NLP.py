@@ -5,9 +5,9 @@ def word_tokenize(text):
     return text.split()
 
 text = "Hello I am Jagjeet, I am a software engineer at Sopra Steria"
-print(text)
+# print(text)
 tokens = word_tokenize(text)
-print(tokens)
+# print(tokens)
 
 # Build Vocabulary:
 
@@ -19,7 +19,7 @@ def build_vocab(tokens):
     return vocab
 
 vocab = build_vocab(tokens)
-print(vocab)
+# print(vocab)
 
 # Encode:
 
@@ -27,7 +27,7 @@ def encode(tokens, vocab):
     return [vocab[token] for token in tokens]
 
 encoded = encode(tokens, vocab)
-print(encoded)
+# print(encoded)
 
 #-----------------------------------------------------------------------#
 
@@ -40,7 +40,7 @@ def char_tokenize(text):
 
 text = "Hello I am Jagjeet"
 tokens = char_tokenize(text)
-print(tokens)
+# print(tokens)
 
 def char_vocab(tokens):
     char_store = {}
@@ -50,13 +50,13 @@ def char_vocab(tokens):
     return char_store
 
 chars = char_vocab(tokens)
-print(chars)
+# print(chars)
 
 def encode(tokens, vocab):
     return [vocab[token] for token in tokens]
 
 encoded = encode(tokens, chars)
-print(encoded)
+# print(encoded)
 
 #---------------------------------------------------------------------#
 # SUBWORD TOKENIZATION
@@ -66,7 +66,8 @@ print("SUBWORD TOKENIZATION: ")
 print("Byte Pair Tokenization: ")
 
 # Step 0: Initialize (Character Level): We split into characters and add end token:
-
+# print("Step 0:")
+# print()
 def get_vocab(corpus):
     vocab = {}
     for word in corpus:
@@ -77,10 +78,13 @@ def get_vocab(corpus):
 
 list_corpus = ['low','lowest','newer','wider']
 vocab_list = get_vocab(list_corpus)
-print(vocab_list)
+print("Corpus List: ",list_corpus)
+# print(vocab_list)
 
 # STEP 1 — Count Pair Frequencies:
-
+# print()
+# print("Step 1:")
+# print()
 from collections import defaultdict
 def get_pairs(vocab):
     pairs = defaultdict(int)
@@ -91,4 +95,64 @@ def get_pairs(vocab):
 
     return pairs
 pairs_list = get_pairs(vocab_list)
-print(pairs_list)
+# print(pairs_list)
+
+# print()
+
+def best_pair(pairs):
+    return max(pairs, key=pairs.get)
+
+# print("Step 2: ")
+# print()
+best_pair = max(pairs_list, key=pairs_list.get)
+# print("Best pair: ", best_pair)
+
+# print()
+# print("Step 3: ")
+# print()
+
+def merge_vocab(pair, vocab):
+    new_vocab = {}
+
+    for word, freq in vocab.items():
+        new_word = []
+        i = 0
+        while i < len(word):
+            if i < len(word)-1 and (word[i], word[i+1]) == pair:
+                new_word.append(word[i] + word[i+1])
+                i+=2
+            else:
+                new_word.append(word[i])
+                i += 1
+        new_vocab[tuple(new_word)] = freq
+    
+    return new_vocab
+
+merge_vocab_list = merge_vocab(best_pair, vocab_list)
+# print(merge_vocab_list)
+
+def train_bpe(corpus, num_merges=10):
+    vocab = get_vocab(corpus)
+    merges = []
+
+    for step in range(num_merges):
+        
+        # STEP 1: count pairs
+        pairs = get_pairs(vocab)
+        if not pairs:
+            break
+        
+        # STEP 2: choose best pair
+        best_pair = max(pairs, key=pairs.get)
+
+        # STEP 3: merge
+        vocab = merge_vocab(best_pair, vocab)
+
+        merges.append(best_pair)
+
+        print(f"Step {step+1}: Merged {best_pair}")
+    
+    return merges, vocab
+
+bpe_result = train_bpe(list_corpus)
+print("BPE_RESULT: ", bpe_result)

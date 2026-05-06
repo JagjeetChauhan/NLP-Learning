@@ -80,10 +80,38 @@ def train_bpe(corpus, num_merges=10):
     
     return merges, vocab
 
+def build_token_vocab(final_vocab, special_tokens=None):
+    if special_tokens is None:
+        special_tokens = ["<pad", "<unk>"]
 
+    token_set = set()
 
+    # collect all learned tokens
+    for word in final_vocab:
+        token_set.update(word)
+    
+    # combine special + learned tokens
+    all_tokens = special_tokens + sorted(token_set)
+
+    # token -> id
+    token_to_id = {
+    token: idx
+    for idx, token in enumerate(all_tokens)
+    }
+
+    # id -> token
+    id_to_token = {
+    idx: token
+    for token, idx in token_to_id.items()
+    }
+
+    return token_to_id, id_to_token
+        
+    # 
 list_corpus = ['low','lowest','newer','wider']
 merges, final_vocab = train_bpe(list_corpus)
+
+token_to_id, id_to_token = build_token_vocab(final_vocab)
 print("Learned merges:", merges, "\n")
 
 print("Encoding Examples:")
@@ -91,3 +119,9 @@ print("lowest ->", encode("lowest", merges))
 print("newer  ->", encode("newer", merges))
 print(encode("low", merges))
 print(encode("wider", merges))
+
+print("\nTOKEN TO ID:")
+print(token_to_id)
+
+print("\nID TO TOKEN:")
+print(id_to_token)

@@ -1,0 +1,486 @@
+Step 1 — Fix Core Correctness
+
+Before anything else, fix:
+
+A) Merge frequency overwrite bug
+
+Current:
+
+new_vocab[tuple(new_word)] = freq
+
+Correct:
+
+new_vocab[tuple(new_word)] = (
+    new_vocab.get(tuple(new_word), 0) + freq
+)
+B) Add unknown token handling
+
+Right now unknown tokens crash silently conceptually.
+
+Add:
+
+def tokens_to_ids(tokens, token_to_id):
+    unk_id = token_to_id["<unk>"]
+
+    return [
+        token_to_id.get(token, unk_id)
+        for token in tokens
+    ]
+Step 2 — Build Proper Decode Pipeline
+
+You need:
+
+Text
+→ Encode
+→ Tokens
+→ IDs
+→ IDs
+→ Tokens
+→ Decode
+→ Original Text
+
+Add:
+
+def decode(tokens):
+    text = ''.join(tokens)
+    return text.replace('</w>', ' ').strip()
+
+And:
+
+def ids_to_tokens(ids, id_to_token):
+    return [
+        id_to_token[i]
+        for i in ids
+    ]
+
+Then full roundtrip:
+
+tokens = encode("lowest", merges)
+
+ids = tokens_to_ids(tokens, token_to_id)
+
+recovered_tokens = ids_to_tokens(ids, id_to_token)
+
+decoded = decode(recovered_tokens)
+
+This is your first complete tokenizer.
+
+Step 3 — Save / Load Tokenizer
+
+This is VERY important.
+
+Real tokenizers are:
+
+merges
+vocabulary
+special tokens
+
+You should save:
+
+tokenizer/
+    merges.txt
+    vocab.json
+    config.json
+Save merges
+import json
+
+def save_tokenizer(merges, token_to_id, path="tokenizer"):
+    import os
+
+    os.makedirs(path, exist_ok=True)
+
+    with open(f"{path}/merges.txt", "w") as f:
+        for pair in merges:
+            f.write(f"{pair[0]} {pair[1]}\n")
+
+    with open(f"{path}/vocab.json", "w") as f:
+        json.dump(token_to_id, f, indent=2)
+Load merges
+def load_tokenizer(path="tokenizer"):
+    import json
+
+    merges = []
+
+    with open(f"{path}/merges.txt") as f:
+        for line in f:
+            a, b = line.strip().split()
+            merges.append((a, b))
+
+    with open(f"{path}/vocab.json") as f:
+        token_to_id = json.load(f)
+
+    id_to_token = {
+        int(v): k
+        for k, v in token_to_id.items()
+    }
+
+    return merges, token_to_id, id_to_token
+
+This is a HUGE milestone.
+
+You now have persistent tokenizer infrastructure.
+
+PHASE 2 — Make It Real
+
+Now move from toy examples to real language.
+
+Step 4 — Train on Real Corpus
+
+Use:
+
+Wikipedia
+Tiny Shakespeare
+Wikitext-2
+OpenWebText subset
+
+Start with:
+
+with open("tinyshakespeare.txt") as f:
+    text = f.read().lower()
+
+corpus = text.split()
+
+Then train:
+
+merges, vocab = train_bpe(corpus, num_merges=500)
+Step 5 — Add Statistics
+
+This is critical research thinking.
+
+Track:
+
+Metric	Why
+vocab size	tokenizer compression
+avg token length	efficiency
+avg tokens per word	sequence reduction
+unknown rate	coverage
+compression ratio	tokenizer quality
+Example metric
+def avg_tokens_per_word(corpus, merges):
+    total = 0
+
+    for word in corpus:
+        total += len(encode(word, merges))
+
+    return total / len(corpus)
+
+This becomes your tokenizer evaluation framework.
+
+Step 6 — Compare Against Real Tokenizers
+
+Now compare with:
+
+GPT-2 tokenizer
+SentencePiece
+WordPiece
+TikToken
+
+Install:
+
+pip install transformers sentencepiece tiktoken
+
+Then compare:
+
+from transformers import AutoTokenizer
+
+tok = AutoTokenizer.from_pretrained("gpt2")
+
+print(tok.tokenize("lowest newer wider"))
+
+Now compare:
+
+token count
+compression
+vocab size
+speed
+
+This is where real understanding begins.
+
+PHASE 3 — Integrate Into Deep Learning
+
+Now your tokenizer becomes part of an LLM pipeline.
+
+Step 7 — Text → IDs
+
+Build:
+
+def tokenize_text(text, merges, token_to_id):
+    words = text.split()
+
+    ids = []
+
+    for word in words:
+        tokens = encode(word, merges)
+        ids.extend(tokens_to_ids(tokens, token_to_id))
+
+    return ids
+
+Now you have:
+
+text → token ids
+
+Exactly like GPT.
+
+Step 8 — Add Embeddings
+
+Minimal PyTorch:
+
+import torch
+import torch.nn as nn
+
+embedding = nn.Embedding(vocab_size, embedding_dim)
+
+Then:
+
+x = torch.tensor(token_ids)
+
+embedded = embedding(x)
+
+Now your tokenizer feeds neural networks.
+
+Massive milestone.
+
+Step 9 — Tiny Language Model
+
+Build:
+
+bigram model
+GRU
+tiny transformer
+
+Pipeline:
+
+Text
+→ BPE
+→ IDs
+→ Embeddings
+→ Transformer
+→ Next Token Prediction
+
+This is literally GPT architecture flow.
+
+PHASE 4 — Advanced Tokenization Engineering
+
+Now things become research-grade.
+
+Step 10 — Replace </w> With Better Systems
+
+Research:
+
+GPT-2 byte-level BPE
+SentencePiece
+Unicode normalization
+
+Current problem:
+
+"Hello!"
+
+becomes messy with punctuation.
+
+You need pre-tokenization.
+
+Step 11 — Regex Pretokenization
+
+Real tokenizers split:
+
+punctuation
+numbers
+whitespace
+
+Example:
+
+import re
+
+tokens = re.findall(r"\w+|[^\w\s]", text)
+
+Huge improvement.
+
+Step 12 — Byte-Level BPE
+
+This is where GPT-2 became powerful.
+
+Instead of characters:
+
+tokenize bytes (0–255)
+
+Benefits:
+
+supports all Unicode
+no unknown chars
+multilingual
+
+This is a MAJOR milestone.
+
+PHASE 5 — Research Direction
+
+Now the interesting part.
+
+You asked:
+
+“What can we try as research?”
+
+THIS is the right question.
+
+Most people stop at implementation.
+Researchers ask:
+
+“Can tokenization itself be improved?”
+
+Yes.
+
+A LOT.
+
+Research Direction 1 — Dynamic Tokenization
+
+Current tokenizers are static.
+
+Idea:
+
+Tokenizer adapts during training
+
+Instead of fixed merges:
+
+model learns merges
+domain-specific tokens emerge
+
+Potential:
+
+better compression
+lower context length
+adaptive vocabulary
+
+Very active research area.
+
+Research Direction 2 — Semantic BPE
+
+Current BPE merges frequency only.
+
+Idea:
+
+Merge semantically meaningful chunks
+
+Instead of:
+
+low + est
+
+maybe:
+
+running
+
+using embedding similarity.
+
+Could reduce fragmentation.
+
+Very interesting.
+
+Research Direction 3 — Multilingual Adaptive BPE
+
+Problem:
+English dominates merges.
+
+Idea:
+
+language-balanced merge scores
+fairness-aware tokenization
+
+Potential research paper territory.
+
+Research Direction 4 — Learned Tokenizers
+
+Modern frontier:
+
+Tokenizer-free transformers
+
+Research from:
+
+Meta
+Google
+Mistral
+
+Examples:
+
+byte transformers
+CANINE
+Charformer
+
+Question:
+
+Do we even need tokenizers?
+
+VERY hot research area.
+
+Research Direction 5 — Entropy-Aware BPE
+
+Instead of frequency:
+
+Use:
+
+merge_score = frequency × predictability
+
+or:
+
+information gain
+
+Could create smarter merges.
+
+This is genuinely research-worthy.
+
+Research Direction 6 — Compression-Oriented Tokenization
+
+Tokenization is really compression.
+
+Research question:
+
+Can better compression improve transformer efficiency?
+
+Potential:
+
+shorter context
+cheaper inference
+faster training
+
+This is very serious research territory.
+
+BEST FULL LEARNING SEQUENCE
+
+Here’s the exact order I’d recommend:
+
+LEVEL 1 — Core Tokenizer
+
+✅ BPE training
+✅ encode
+⬜ decode
+⬜ ids
+⬜ save/load
+⬜ unknown handling
+
+LEVEL 2 — Real NLP
+
+⬜ real datasets
+⬜ tokenizer metrics
+⬜ regex pretokenization
+⬜ punctuation support
+⬜ speed optimization
+
+LEVEL 3 — GPT-Level Tokenization
+
+⬜ byte-level BPE
+⬜ unicode handling
+⬜ special tokens
+⬜ batching
+⬜ streaming encoding
+
+LEVEL 4 — Deep Learning
+
+⬜ embeddings
+⬜ tiny transformer
+⬜ train LM
+⬜ perplexity evaluation
+
+LEVEL 5 — Research
+
+⬜ adaptive tokenization
+⬜ semantic merges
+⬜ entropy-aware merges
+⬜ multilingual fairness
+⬜ tokenizer-free transformers

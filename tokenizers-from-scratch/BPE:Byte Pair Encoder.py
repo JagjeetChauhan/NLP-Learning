@@ -36,7 +36,9 @@ def merge_vocab(pair, vocab):
             else:
                 new_word.append(word[i])
                 i += 1
-        new_vocab[tuple(new_word)] = freq
+        new_vocab[tuple(new_word)] = (
+            new_vocab.get(tuple(new_word), 0) + freq
+        )
     
     return new_vocab
 
@@ -82,7 +84,7 @@ def train_bpe(corpus, num_merges=10):
 
 def build_token_vocab(final_vocab, special_tokens=None):
     if special_tokens is None:
-        special_tokens = ["<pad", "<unk>"]
+        special_tokens = ["<pad>", "<unk>"]
 
     token_set = set()
 

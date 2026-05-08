@@ -109,7 +109,16 @@ def build_token_vocab(final_vocab, special_tokens=None):
 
     return token_to_id, id_to_token
         
-    # 
+def encode_ids(word, merges, token_to_id):
+    tokens = encode(word, merges)
+    ids = []
+
+    for token in tokens:
+        ids.append(
+            token_to_id.get(token, token_to_id["<unk>"])
+        )
+    return ids
+
 list_corpus = ['low','lowest','newer','wider']
 merges, final_vocab = train_bpe(list_corpus)
 
@@ -127,3 +136,9 @@ print(token_to_id)
 
 print("\nID TO TOKEN:")
 print(id_to_token)
+
+print("\nTOKEN ID ENCODING:")
+
+print("lowest ->", encode_ids("lowest", merges, token_to_id))
+print("newer  ->", encode_ids("newer", merges, token_to_id))
+print("wider  ->", encode_ids("wider", merges, token_to_id))

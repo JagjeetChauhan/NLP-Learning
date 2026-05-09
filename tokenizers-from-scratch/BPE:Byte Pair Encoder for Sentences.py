@@ -59,6 +59,37 @@ def train_bpe(corpus, num_merges):
 
     return merges, vocab
 
+def encode_word(word, merges):
+    tokens = list(word) + ['</w>']
+
+    for pair in merges:
+        i=0
+        new_tokens = []
+        while i < len(tokens):
+            if(
+                i<len(tokens) - 1 and
+                (tokens[i], tokens[i+1]) == pair
+            ):
+                new_tokens.append(
+                    tokens[i] + tokens[i+1]
+                )
+                i+=2
+            else:
+                new_tokens.append(tokens[i])
+                i+=1
+        tokens = new_tokens
+    return tokens
+
+def encode_text(sentence, merges):
+    all_tokens = []
+
+    words = sentence.split()
+    for word in words:
+        word_token = encode_word(word, merges)
+        all_tokens.extend(word_token)
+
+    return all_tokens
+
 corpus = [
 
     "low",
@@ -89,3 +120,12 @@ train_merges, train_vocab = train_bpe(corpus, 5)
 print("Trained Merges: ",train_merges)
 print()
 print("Trained Vocab: ",train_vocab)
+
+encoded_word = encode_word("pizza", train_merges)
+print(encoded_word)
+
+sentence = "Hello I am at the lowest point on earth"
+encoded_sentence = encode_text(sentence, train_merges)
+print(encoded_sentence)
+
+

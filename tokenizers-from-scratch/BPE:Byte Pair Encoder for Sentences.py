@@ -90,6 +90,40 @@ def encode_text(sentence, merges):
 
     return all_tokens
 
+def build_token_vocab(final_vocab,special_tokens=None):
+    if special_tokens is None:
+        special_tokens = ["<pad>", "<unk>"]
+    token_set = set()
+    for word in final_vocab:
+        token_set.update(word)
+    all_tokens = special_tokens + sorted(token_set)
+
+    token_to_id = {
+        token: idx
+
+        for idx, token in enumerate(all_tokens)
+    }
+
+    id_to_token = {
+        idx: token
+        for token, idx in token_to_id.items()
+    }
+
+    return token_to_id, id_to_token
+
+def tokens_to_ids(tokens, token_to_id):
+    unk_id = token_to_id["<unk>"]
+    return [
+        token_to_id.get(token, unk_id)
+        for token in tokens
+    ]
+
+def ids_to_tokens(ids, id_to_token):
+    return [
+        id_to_token[i]
+        for i in ids
+    ]
+
 corpus = [
 
     "low",
@@ -127,5 +161,10 @@ print(encoded_word)
 sentence = "Hello I am at the lowest point on earth"
 encoded_sentence = encode_text(sentence, train_merges)
 print(encoded_sentence)
+
+tokens_to_ids, ids_to_tokens = build_token_vocab(train_vocab, None)
+print(tokens_to_ids)
+print()
+print(ids_to_tokens)
 
 

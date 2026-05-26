@@ -344,7 +344,7 @@ def encode(word, merge_ranks):
 # Real NLP works on sentences, not isolated words.
 # =========================================================
 
-def encode_sentence(sentence, merges):
+def encode_sentence(sentence, merge_ranks):
 
     all_tokens = []
 
@@ -352,7 +352,7 @@ def encode_sentence(sentence, merges):
 
     for word in words:
 
-        word_tokens = encode_word(word, merges)
+        word_tokens = encode_word(word, merge_ranks)
 
         all_tokens.extend(word_tokens)
 
@@ -374,7 +374,7 @@ def encode_sentence(sentence, merges):
 
 def build_token_vocab(
     final_vocab,
-    merges,
+    merge_ranks,
     special_tokens=None
 ):
 
@@ -410,7 +410,7 @@ def build_token_vocab(
     # ADD MERGED TOKENS
     # =====================================================
 
-    for pair in merges:
+    for pair in merge_ranks:
 
         merged_token = pair[0] + pair[1]
 
@@ -518,7 +518,7 @@ def decode_tokens(tokens):
 # Production tokenizers use full pipelines.
 # =========================================================
 
-def encode_sentence_ids(sentence, merges, token_to_id):
+def encode_sentence_ids(sentence, merge_ranks, token_to_id):
 
     tokens = encode_sentence(sentence, merges)
 
@@ -547,11 +547,11 @@ corpus = [
 # TRAIN BPE
 # =========================================================
 
-merges, final_vocab = train_bpe(corpus, 10)
+merge_ranks, final_vocab = train_bpe(list_corpus)
 
-print("\nMERGES:\n")
+print("\nMERGE RANKS:\n")
 
-print(merges)
+print(merge_ranks)
 
 
 # =========================================================
@@ -560,7 +560,7 @@ print(merges)
 
 token_to_id, id_to_token = build_token_vocab(
     final_vocab,
-    merges
+    merge_ranks
 )
 
 print("\nTOKEN TO ID:\n")
@@ -574,7 +574,7 @@ print(token_to_id)
 
 sentence = "Hello! I am at the lowest point on earth."
 
-tokens = encode_sentence(sentence, merges)
+tokens = encode_sentence(sentence, merge_ranks)
 
 print("\nENCODED TOKENS:\n")
 

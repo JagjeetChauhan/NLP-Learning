@@ -122,6 +122,36 @@ def get_best_pair(pairs):
 
     return max(pairs, key=pairs.get)
 
+# =========================================================
+# HELPER FUNCTION:
+# GET ADJACENT TOKEN PAIRS
+# =========================================================
+# Definition:
+# Finds all neighboring token pairs.
+#
+# Example:
+# ['l', 'o', 'w']
+#
+# ->
+#
+# {
+#   ('l', 'o'),
+#   ('o', 'w')
+# }
+# =========================================================
+
+def get_adjacent_pairs(tokens):
+
+    pairs = set()
+
+    for i in range(len(tokens) - 1):
+
+        pairs.add(
+            (tokens[i], tokens[i + 1])
+        )
+
+    return pairs
+
 
 # =========================================================
 # STEP 5: MERGE TOKEN PAIRS

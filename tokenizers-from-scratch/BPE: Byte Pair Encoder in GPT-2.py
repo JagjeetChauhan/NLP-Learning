@@ -254,34 +254,58 @@ def train_bpe(corpus, num_merges=10):
 
 
 # =========================================================
-# STEP 7: ENCODE SINGLE WORD
+# STEP 7: GPT-STYLE BPE ENCODING
 # =========================================================
 # Definition:
-# Applies learned merges to one word.
+# Applies ranked merges dynamically.
 #
-# Arguments:
-# word -> input word
-# merges -> learned merge rules
-#
-# Why Needed?
-# Core BPE encoding step.
+# Functionality:
+# 1. Find adjacent pairs
+# 2. Select lowest-ranked pair
+# 3. Merge pair
+# 4. Repeat until no merges remain
 # =========================================================
 
-def encode_word(word, merges):
+def encode(word, merge_ranks):
 
+    # Initial character tokens
     tokens = list(word) + ['</w>']
 
-    for pair in merges:
+    while True:
+
+        # Find neighboring pairs
+        pairs = get_adjacent_pairs(tokens)
+
+        # Keep only valid learned merges
+        candidate_pairs = {
+
+            pair: merge_ranks[pair]
+
+            for pair in pairs
+
+            if pair in merge_ranks
+        }
+
+        # Stop if no valid merges
+        if not candidate_pairs:
+            break
+
+        # Select BEST ranked pair
+        best_pair = min(
+            candidate_pairs,
+            key=candidate_pairs.get
+        )
+
+        # Merge selected pair
+        new_tokens = []
 
         i = 0
-
-        new_tokens = []
 
         while i < len(tokens):
 
             if (
                 i < len(tokens) - 1 and
-                (tokens[i], tokens[i + 1]) == pair
+                (tokens[i], tokens[i + 1]) == best_pair
             ):
 
                 new_tokens.append(

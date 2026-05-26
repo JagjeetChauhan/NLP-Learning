@@ -177,47 +177,50 @@ def merge_vocab(pair, vocab):
 
 
 # =========================================================
-# STEP 6: TRAIN BPE
+# STEP 6: TRAIN BPE WITH MERGE RANKING
 # =========================================================
 # Definition:
-# Learns merge rules.
-#
-# Arguments:
-# corpus -> training words
-# num_merges -> number of merges
+# Learns merge rules and stores merge priority.
 #
 # Functionality:
-# Repeatedly:
-# 1. Count pairs
-# 2. Select best pair
-# 3. Merge pair
+# Earlier merges get lower rank numbers.
 #
-# Why Needed?
-# Learns subword vocabulary.
+# Example:
+# ('l', 'o') -> rank 0
+# ('lo', 'w') -> rank 1
 # =========================================================
 
-def train_bpe(corpus, num_merges):
+def train_bpe(corpus, num_merges=10):
 
     vocab = get_vocab(corpus)
 
-    merges = []
+    # Store merge rankings
+    merge_ranks = {}
 
     for step in range(num_merges):
 
+        # Count token pairs
         pairs = get_pairs(vocab)
 
         if not pairs:
             break
 
+        # Select best pair
         best_pair = get_best_pair(pairs)
 
+        # Merge pair
         vocab = merge_vocab(best_pair, vocab)
 
-        merges.append(best_pair)
+        # Store ranking
+        merge_ranks[best_pair] = step
 
-        print(f"Step {step + 1}: Merged {best_pair}")
+        print(
+            f"Step {step + 1}: "
+            f"Merged {best_pair} "
+            f"-> Rank {step}"
+        )
 
-    return merges, vocab
+    return merge_ranks, vocab
 
 
 # =========================================================

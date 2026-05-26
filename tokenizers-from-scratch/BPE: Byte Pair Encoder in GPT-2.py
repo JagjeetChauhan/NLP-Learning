@@ -352,7 +352,7 @@ def encode_sentence(sentence, merge_ranks):
 
     for word in words:
 
-        word_tokens = encode_word(word, merge_ranks)
+        word_tokens = encode(word, merge_ranks)
 
         all_tokens.extend(word_tokens)
 
@@ -520,7 +520,7 @@ def decode_tokens(tokens):
 
 def encode_sentence_ids(sentence, merge_ranks, token_to_id):
 
-    tokens = encode_sentence(sentence, merges)
+    tokens = encode_sentence(sentence, merge_ranks)
 
     ids = tokens_to_ids(tokens, token_to_id)
 
@@ -531,7 +531,7 @@ def encode_sentence_ids(sentence, merge_ranks, token_to_id):
 # TRAINING CORPUS
 # =========================================================
 
-corpus = [
+list_corpus = [
 
     "low",
     "lowest",

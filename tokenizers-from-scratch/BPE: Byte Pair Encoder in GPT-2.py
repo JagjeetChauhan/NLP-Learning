@@ -1,5 +1,23 @@
 from collections import defaultdict
 import re
+import json
+
+
+# =========================================================
+# GPT-2 STYLE BPE TOKENIZER
+# =========================================================
+#
+# FEATURES:
+#
+# 1. TRAIN BPE
+# 2. SAVE TOKENIZER
+# 3. LOAD TOKENIZER
+# 4. ENCODE TEXT
+# 5. TOKENS -> IDS
+# 6. IDS -> TOKENS
+# 7. DECODE TEXT
+#
+# =========================================================
 
 
 # =========================================================
@@ -14,6 +32,7 @@ import re
 # Functionality:
 # - Lowercases text
 # - Separates punctuation
+# - Removes extra spaces
 # - Splits into words
 #
 # Why Needed?
@@ -22,7 +41,9 @@ import re
 #
 # Example:
 # "Hello, World!"
+#
 # ->
+#
 # ['hello', ',', 'world', '!']
 # =========================================================
 
@@ -32,10 +53,18 @@ def preprocess_text(sentence):
     sentence = sentence.lower()
 
     # Separate punctuation
-    sentence = re.sub(r'([.,!?])', r' \1 ', sentence)
+    sentence = re.sub(
+        r'([.,!?])',
+        r' \1 ',
+        sentence
+    )
 
     # Remove extra spaces
-    sentence = re.sub(r'\s+', ' ', sentence).strip()
+    sentence = re.sub(
+        r'\s+',
+        ' ',
+        sentence
+    ).strip()
 
     # Split into words
     words = sentence.split()
@@ -47,18 +76,25 @@ def preprocess_text(sentence):
 # STEP 2: BUILD INITIAL VOCABULARY
 # =========================================================
 # Definition:
-# Converts words into character tokens.
+# Converts words into character-level tokens.
 #
 # Arguments:
 # corpus -> list of words
 #
 # Functionality:
 # - Splits words into characters
-# - Adds </w>
-# - Counts frequency
+# - Adds </w> end-of-word token
+# - Counts word frequency
 #
 # Why Needed?
 # BPE starts from character-level vocabulary.
+#
+# Example:
+# "low"
+#
+# ->
+#
+# ('l', 'o', 'w', '</w>')
 # =========================================================
 
 def get_vocab(corpus):
@@ -67,11 +103,16 @@ def get_vocab(corpus):
 
     for word in corpus:
 
+        # Character tokens
         tokens = list(word) + ['</w>']
 
+        # Convert to tuple
         key = tuple(tokens)
 
-        vocab[key] = vocab.get(key, 0) + 1
+        # Count frequency
+        vocab[key] = (
+            vocab.get(key, 0) + 1
+        )
 
     return vocab
 
@@ -80,16 +121,25 @@ def get_vocab(corpus):
 # STEP 3: COUNT TOKEN PAIRS
 # =========================================================
 # Definition:
-# Counts adjacent token pair frequency.
+# Counts frequency of adjacent token pairs.
 #
 # Arguments:
 # vocab -> tokenized vocabulary
 #
 # Functionality:
-# Finds most common neighboring tokens.
+# Finds neighboring token pairs.
 #
 # Why Needed?
-# BPE merges the most frequent pair.
+# BPE merges the most frequent pair first.
+#
+# Example:
+#
+# ('l', 'o', 'w')
+#
+# ->
+#
+# ('l', 'o')
+# ('o', 'w')
 # =========================================================
 
 def get_pairs(vocab):
@@ -100,7 +150,9 @@ def get_pairs(vocab):
 
         for i in range(len(word) - 1):
 
-            pairs[(word[i], word[i + 1])] += freq
+            pairs[
+                (word[i], word[i + 1])
+            ] += freq
 
     return pairs
 
@@ -109,7 +161,7 @@ def get_pairs(vocab):
 # STEP 4: SELECT BEST PAIR
 # =========================================================
 # Definition:
-# Finds most frequent pair.
+# Finds most frequent token pair.
 #
 # Arguments:
 # pairs -> pair frequency dictionary
@@ -120,16 +172,24 @@ def get_pairs(vocab):
 
 def get_best_pair(pairs):
 
-    return max(pairs, key=pairs.get)
+    return max(
+        pairs,
+        key=pairs.get
+    )
+
 
 # =========================================================
 # HELPER FUNCTION:
 # GET ADJACENT TOKEN PAIRS
 # =========================================================
 # Definition:
-# Finds all neighboring token pairs.
+# Finds neighboring token pairs.
+#
+# Arguments:
+# tokens -> list of tokens
 #
 # Example:
+#
 # ['l', 'o', 'w']
 #
 # ->
@@ -163,8 +223,16 @@ def get_adjacent_pairs(tokens):
 # pair -> best pair
 # vocab -> vocabulary
 #
+# Functionality:
+# Combines neighboring tokens.
+#
 # Example:
-# ('l', 'o') -> 'lo'
+#
+# ('l', 'o')
+#
+# ->
+#
+# 'lo'
 #
 # Why Needed?
 # Creates larger subword units.
@@ -182,6 +250,7 @@ def merge_vocab(pair, vocab):
 
         while i < len(word):
 
+            # Merge pair
             if (
                 i < len(word) - 1 and
                 (word[i], word[i + 1]) == pair
@@ -200,7 +269,10 @@ def merge_vocab(pair, vocab):
                 i += 1
 
         new_vocab[tuple(new_word)] = (
-            new_vocab.get(tuple(new_word), 0) + freq
+            new_vocab.get(
+                tuple(new_word),
+                0
+            ) + freq
         )
 
     return new_vocab
@@ -210,17 +282,31 @@ def merge_vocab(pair, vocab):
 # STEP 6: TRAIN BPE WITH MERGE RANKING
 # =========================================================
 # Definition:
-# Learns merge rules and stores merge priority.
+# Learns merge rules and merge priority.
+#
+# Arguments:
+# corpus -> training corpus
+# num_merges -> number of merges
 #
 # Functionality:
-# Earlier merges get lower rank numbers.
+# - Counts token pairs
+# - Selects best pair
+# - Merges pair
+# - Stores merge ranking
+#
+# Why Needed?
+# Earlier merges get higher priority.
 #
 # Example:
+#
 # ('l', 'o') -> rank 0
 # ('lo', 'w') -> rank 1
 # =========================================================
 
-def train_bpe(corpus, num_merges=10):
+def train_bpe(
+    corpus,
+    num_merges=10
+):
 
     vocab = get_vocab(corpus)
 
@@ -232,6 +318,7 @@ def train_bpe(corpus, num_merges=10):
         # Count token pairs
         pairs = get_pairs(vocab)
 
+        # Stop if no pairs remain
         if not pairs:
             break
 
@@ -239,10 +326,15 @@ def train_bpe(corpus, num_merges=10):
         best_pair = get_best_pair(pairs)
 
         # Merge pair
-        vocab = merge_vocab(best_pair, vocab)
+        vocab = merge_vocab(
+            best_pair,
+            vocab
+        )
 
-        # Store ranking
-        merge_ranks[best_pair] = step
+        # Store merge rank
+        merge_ranks[
+            best_pair
+        ] = step
 
         print(
             f"Step {step + 1}: "
@@ -257,13 +349,21 @@ def train_bpe(corpus, num_merges=10):
 # STEP 7: GPT-STYLE BPE ENCODING
 # =========================================================
 # Definition:
-# Applies ranked merges dynamically.
+# Applies learned merges dynamically.
+#
+# Arguments:
+# word -> input word
+# merge_ranks -> learned merge priorities
 #
 # Functionality:
-# 1. Find adjacent pairs
-# 2. Select lowest-ranked pair
-# 3. Merge pair
-# 4. Repeat until no merges remain
+# 1. Find neighboring pairs
+# 2. Keep valid learned merges
+# 3. Select lowest-ranked pair
+# 4. Merge pair
+# 5. Repeat until no merges remain
+#
+# Why Needed?
+# GPT-style tokenizers apply merges dynamically.
 # =========================================================
 
 def encode(word, merge_ranks):
@@ -276,7 +376,7 @@ def encode(word, merge_ranks):
         # Find neighboring pairs
         pairs = get_adjacent_pairs(tokens)
 
-        # Keep only valid learned merges
+        # Keep only learned merges
         candidate_pairs = {
 
             pair: merge_ranks[pair]
@@ -286,17 +386,17 @@ def encode(word, merge_ranks):
             if pair in merge_ranks
         }
 
-        # Stop if no valid merges
+        # Stop if no valid merges remain
         if not candidate_pairs:
             break
 
-        # Select BEST ranked pair
+        # Select best-ranked pair
         best_pair = min(
             candidate_pairs,
             key=candidate_pairs.get
         )
 
-        # Merge selected pair
+        # Merge pair
         new_tokens = []
 
         i = 0
@@ -333,7 +433,7 @@ def encode(word, merge_ranks):
 #
 # Arguments:
 # sentence -> input sentence
-# merges -> learned merges
+# merge_ranks -> learned merges
 #
 # Functionality:
 # 1. Preprocess sentence
@@ -341,10 +441,13 @@ def encode(word, merge_ranks):
 # 3. Combine all tokens
 #
 # Why Needed?
-# Real NLP works on sentences, not isolated words.
+# Real NLP works on sentences.
 # =========================================================
 
-def encode_sentence(sentence, merge_ranks):
+def encode_sentence(
+    sentence,
+    merge_ranks
+):
 
     all_tokens = []
 
@@ -352,7 +455,10 @@ def encode_sentence(sentence, merge_ranks):
 
     for word in words:
 
-        word_tokens = encode(word, merge_ranks)
+        word_tokens = encode(
+            word,
+            merge_ranks
+        )
 
         all_tokens.extend(word_tokens)
 
@@ -366,7 +472,14 @@ def encode_sentence(sentence, merge_ranks):
 # Creates token <-> id mappings.
 #
 # Arguments:
-# final_vocab -> learned vocab
+# final_vocab -> learned vocabulary
+# merge_ranks -> learned merges
+#
+# Functionality:
+# - Builds token set
+# - Adds merged tokens
+# - Adds special tokens
+# - Creates mappings
 #
 # Why Needed?
 # Neural networks use numerical IDs.
@@ -379,26 +492,30 @@ def build_token_vocab(
 ):
 
     if special_tokens is None:
-        special_tokens = ["<pad>", "<unk>"]
+
+        special_tokens = [
+            "<pad>",
+            "<unk>"
+        ]
 
     token_set = set()
 
     # =====================================================
-    # ADD ALL TOKENS FROM FINAL VOCAB
+    # ADD TOKENS FROM FINAL VOCAB
     # =====================================================
 
     for word in final_vocab:
+
         token_set.update(word)
 
     # =====================================================
-    # ADD ALL INDIVIDUAL CHARACTERS
+    # ADD INDIVIDUAL CHARACTERS
     # =====================================================
 
     for word in final_vocab:
 
         for token in word:
 
-            # Split merged tokens into characters
             chars = re.findall(
                 r'</w>|.',
                 token
@@ -412,24 +529,43 @@ def build_token_vocab(
 
     for pair in merge_ranks:
 
-        merged_token = pair[0] + pair[1]
+        merged_token = (
+            pair[0] + pair[1]
+        )
 
         token_set.add(merged_token)
 
     # =====================================================
-    # FINAL VOCAB
+    # FINAL TOKEN LIST
     # =====================================================
 
-    all_tokens = special_tokens + sorted(token_set)
+    all_tokens = (
+        special_tokens +
+        sorted(token_set)
+    )
+
+    # =====================================================
+    # TOKEN -> ID
+    # =====================================================
 
     token_to_id = {
+
         token: idx
-        for idx, token in enumerate(all_tokens)
+
+        for idx, token
+        in enumerate(all_tokens)
     }
 
+    # =====================================================
+    # ID -> TOKEN
+    # =====================================================
+
     id_to_token = {
+
         idx: token
-        for token, idx in token_to_id.items()
+
+        for token, idx
+        in token_to_id.items()
     }
 
     return token_to_id, id_to_token
@@ -441,17 +577,27 @@ def build_token_vocab(
 # Definition:
 # Converts tokens into numerical IDs.
 #
+# Arguments:
+# tokens -> token list
+# token_to_id -> vocabulary mapping
+#
 # Why Needed?
 # Deep learning models consume IDs.
 # =========================================================
 
-def tokens_to_ids(tokens, token_to_id):
+def tokens_to_ids(
+    tokens,
+    token_to_id
+):
 
     unk_id = token_to_id["<unk>"]
 
     return [
 
-        token_to_id.get(token, unk_id)
+        token_to_id.get(
+            token,
+            unk_id
+        )
 
         for token in tokens
     ]
@@ -462,9 +608,19 @@ def tokens_to_ids(tokens, token_to_id):
 # =========================================================
 # Definition:
 # Converts IDs back into tokens.
+#
+# Arguments:
+# ids -> numerical IDs
+# id_to_token -> reverse vocabulary mapping
+#
+# Why Needed?
+# Reconstructs token sequence.
 # =========================================================
 
-def ids_to_tokens(ids, id_to_token):
+def ids_to_tokens(
+    ids,
+    id_to_token
+):
 
     return [
 
@@ -479,6 +635,9 @@ def ids_to_tokens(ids, id_to_token):
 # =========================================================
 # Definition:
 # Converts tokens back into readable text.
+#
+# Arguments:
+# tokens -> token list
 #
 # Functionality:
 # Removes </w> markers.
@@ -495,7 +654,12 @@ def decode_tokens(tokens):
 
         if token.endswith("</w>"):
 
-            text += token.replace("</w>", "") + " "
+            text += (
+                token.replace(
+                    "</w>",
+                    ""
+                ) + " "
+            )
 
         else:
 
@@ -510,21 +674,185 @@ def decode_tokens(tokens):
 # Definition:
 # Full tokenizer pipeline.
 #
+# Arguments:
+# sentence -> input text
+# merge_ranks -> learned merges
+# token_to_id -> token vocabulary
+#
+# Functionality:
+#
 # sentence
-# -> tokens
-# -> ids
+# ->
+# tokens
+# ->
+# ids
 #
 # Why Needed?
-# Production tokenizers use full pipelines.
+# Production tokenizers use pipelines.
 # =========================================================
 
-def encode_sentence_ids(sentence, merge_ranks, token_to_id):
+def encode_sentence_ids(
+    sentence,
+    merge_ranks,
+    token_to_id
+):
 
-    tokens = encode_sentence(sentence, merge_ranks)
+    tokens = encode_sentence(
+        sentence,
+        merge_ranks
+    )
 
-    ids = tokens_to_ids(tokens, token_to_id)
+    ids = tokens_to_ids(
+        tokens,
+        token_to_id
+    )
 
     return ids
+
+
+# =========================================================
+# STEP 14: SAVE TOKENIZER
+# =========================================================
+# Definition:
+# Saves tokenizer to disk.
+#
+# Arguments:
+# merge_ranks -> learned merges
+# token_to_id -> vocabulary mapping
+# id_to_token -> reverse mapping
+#
+# Functionality:
+# - Converts tuple keys to strings
+# - Stores tokenizer data as JSON
+#
+# Why Needed?
+# Tokenizers are trained once and reused.
+# =========================================================
+
+def save_tokenizer(
+    merge_ranks,
+    token_to_id,
+    id_to_token,
+    filepath="tokenizer.json"
+):
+
+    # =====================================================
+    # CONVERT TUPLE KEYS -> STRINGS
+    # =====================================================
+
+    serializable_merges = {
+
+        " ".join(pair): rank
+
+        for pair, rank
+        in merge_ranks.items()
+    }
+
+    # =====================================================
+    # BUILD SAVE OBJECT
+    # =====================================================
+
+    tokenizer_data = {
+
+        "merge_ranks":
+        serializable_merges,
+
+        "token_to_id":
+        token_to_id,
+
+        "id_to_token":
+        id_to_token
+    }
+
+    # =====================================================
+    # SAVE JSON FILE
+    # =====================================================
+
+    with open(filepath, "w") as f:
+
+        json.dump(
+            tokenizer_data,
+            f,
+            indent=4
+        )
+
+    print(
+        f"\nTokenizer saved to {filepath}"
+    )
+
+
+# =========================================================
+# STEP 15: LOAD TOKENIZER
+# =========================================================
+# Definition:
+# Loads tokenizer from disk.
+#
+# Arguments:
+# filepath -> tokenizer file
+#
+# Functionality:
+# - Loads JSON
+# - Restores merge ranks
+# - Restores vocabulary mappings
+#
+# Why Needed?
+# Allows tokenizer reuse without retraining.
+# =========================================================
+
+def load_tokenizer(
+    filepath="tokenizer.json"
+):
+
+    # =====================================================
+    # LOAD JSON FILE
+    # =====================================================
+
+    with open(filepath, "r") as f:
+
+        tokenizer_data = json.load(f)
+
+    # =====================================================
+    # RESTORE MERGE RANKS
+    # =====================================================
+
+    merge_ranks = {
+
+        tuple(pair.split()): rank
+
+        for pair, rank
+        in tokenizer_data[
+            "merge_ranks"
+        ].items()
+    }
+
+    # =====================================================
+    # RESTORE TOKEN MAPPINGS
+    # =====================================================
+
+    token_to_id = tokenizer_data[
+        "token_to_id"
+    ]
+
+    # JSON converts integer keys to strings
+    id_to_token = {
+
+        int(idx): token
+
+        for idx, token
+        in tokenizer_data[
+            "id_to_token"
+        ].items()
+    }
+
+    print(
+        f"\nTokenizer loaded from {filepath}"
+    )
+
+    return (
+        merge_ranks,
+        token_to_id,
+        id_to_token
+    )
 
 
 # =========================================================
@@ -539,76 +867,122 @@ list_corpus = [
     "wider",
     "newest",
     "lower",
-    "low"
+    "hello",
+    "world",
+    "point",
+    "earth",
+    "the",
+    "i",
+    "am",
+    "at",
+    "on",
+    "!",
+    "."
 ]
 
 
 # =========================================================
-# TRAIN BPE
+# MAIN EXECUTION
 # =========================================================
 
-merge_ranks, final_vocab = train_bpe(list_corpus)
+if __name__ == "__main__":
 
-print("\nMERGE RANKS:\n")
+    # =====================================================
+    # TRAIN BPE TOKENIZER
+    # =====================================================
 
-print(merge_ranks)
+    merge_ranks, final_vocab = train_bpe(
+        list_corpus
+    )
 
+    print("\nMERGE RANKS:\n")
 
-# =========================================================
-# BUILD TOKEN VOCAB
-# =========================================================
+    print(merge_ranks)
 
-token_to_id, id_to_token = build_token_vocab(
-    final_vocab,
-    merge_ranks
-)
+    # =====================================================
+    # BUILD TOKEN VOCABULARY
+    # =====================================================
 
-print("\nTOKEN TO ID:\n")
+    token_to_id, id_to_token = (
+        build_token_vocab(
+            final_vocab,
+            merge_ranks
+        )
+    )
 
-print(token_to_id)
+    print("\nTOKEN TO ID:\n")
 
+    print(token_to_id)
 
-# =========================================================
-# ENCODE SENTENCE
-# =========================================================
+    # =====================================================
+    # SAVE TOKENIZER
+    # =====================================================
 
-sentence = "Hello! I am at the lowest point on earth."
+    save_tokenizer(
+        merge_ranks,
+        token_to_id,
+        id_to_token
+    )
 
-tokens = encode_sentence(sentence, merge_ranks)
+    # =====================================================
+    # LOAD TOKENIZER
+    # =====================================================
 
-print("\nENCODED TOKENS:\n")
+    merge_ranks, token_to_id, id_to_token = (
+        load_tokenizer()
+    )
 
-print(tokens)
+    # =====================================================
+    # ENCODE SENTENCE
+    # =====================================================
 
+    sentence = (
+        "Hello! I am at the lowest point on earth."
+    )
 
-# =========================================================
-# TOKENS -> IDS
-# =========================================================
+    tokens = encode_sentence(
+        sentence,
+        merge_ranks
+    )
 
-ids = tokens_to_ids(tokens, token_to_id)
+    print("\nENCODED TOKENS:\n")
 
-print("\nTOKEN IDS:\n")
+    print(tokens)
 
-print(ids)
+    # =====================================================
+    # TOKENS -> IDS
+    # =====================================================
 
+    ids = tokens_to_ids(
+        tokens,
+        token_to_id
+    )
 
-# =========================================================
-# IDS -> TOKENS
-# =========================================================
+    print("\nTOKEN IDS:\n")
 
-recovered_tokens = ids_to_tokens(ids, id_to_token)
+    print(ids)
 
-print("\nRECOVERED TOKENS:\n")
+    # =====================================================
+    # IDS -> TOKENS
+    # =====================================================
 
-print(recovered_tokens)
+    recovered_tokens = ids_to_tokens(
+        ids,
+        id_to_token
+    )
 
+    print("\nRECOVERED TOKENS:\n")
 
-# =========================================================
-# DECODE BACK
-# =========================================================
+    print(recovered_tokens)
 
-decoded_text = decode_tokens(recovered_tokens)
+    # =====================================================
+    # DECODE BACK
+    # =====================================================
 
-print("\nDECODED TEXT:\n")
+    decoded_text = decode_tokens(
+        recovered_tokens
+    )
 
-print(decoded_text)
+    print("\nDECODED TEXT:\n")
+
+    print(decoded_text)

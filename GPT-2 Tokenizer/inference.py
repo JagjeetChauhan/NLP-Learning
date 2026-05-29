@@ -1,6 +1,7 @@
 import re
 import json
 from config import SPECIAL_TOKENS
+from tokenizer_utils import pad_sequence
 
 # =========================================================
 # STEP 1: PREPROCESS TEXT
@@ -209,19 +210,43 @@ def ids_to_tokens(ids, id_to_token):
 # STEP 8: DECODE TOKENS
 # =========================================================
 
-def decode_tokens(tokens):
+def decode_tokens(
+    tokens
+):
 
     text = ""
 
+    ignore_tokens = {
+
+        "<pad>",
+        "<bos>",
+        "<eos>"
+    }
+
+
     for token in tokens:
+
+
+        if token in ignore_tokens:
+
+            continue
+
 
         if token.endswith("</w>"):
 
-            text += token.replace("</w>", "") + " "
+            text += (
+                token.replace(
+                    "</w>",
+                    ""
+                )
+                +
+                " "
+            )
 
         else:
 
             text += token
+
 
     return text.strip()
 
@@ -237,7 +262,7 @@ if __name__ == "__main__":
     )
 
     sentence = (
-        "Hello! I am at the lowest point on earth."
+        "Hello! I am"
     )
 
     tokens = encode_sentence(
@@ -253,6 +278,20 @@ if __name__ == "__main__":
     ids = tokens_to_ids(
         tokens,
         token_to_id
+    )
+
+    ids = pad_sequence(
+        input_ids = ids,
+        max_length = 20,
+        pad_token_id = token_to_id["<pad>"]
+    )
+
+    print(
+    "\nSEQUENCE LENGTH:"
+    )
+
+    print(
+        len(ids)
     )
 
     print("\nTOKEN IDS:\n")

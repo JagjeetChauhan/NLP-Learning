@@ -1,0 +1,14 @@
+# =========================================================
+# TOKENIZER CONFIGURATION
+# =========================================================
+
+SPECIAL_TOKENS = {
+
+    "pad_token": "<pad>",
+
+    "unk_token": "<unk>",
+
+    "bos_token": "<bos>",
+
+    "eos_token": "<eos>"
+}

@@ -1,6 +1,6 @@
 import re
 import json
-
+from config import SPECIAL_TOKENS
 
 # =========================================================
 # STEP 1: PREPROCESS TEXT
@@ -46,6 +46,9 @@ def load_tokenizer(filepath="tokenizer.json"):
 
         tokenizer_data = json.load(f)
 
+    special_tokens = tokenizer_data[
+        "special_tokens"
+    ]
     merge_ranks = {
 
         tuple(pair.split()): rank
@@ -73,7 +76,8 @@ def load_tokenizer(filepath="tokenizer.json"):
     return (
         merge_ranks,
         token_to_id,
-        id_to_token
+        id_to_token,
+        special_tokens
     )
 
 
@@ -138,7 +142,7 @@ def encode(word, merge_ranks):
 # STEP 5: ENCODE SENTENCE
 # =========================================================
 
-def encode_sentence(sentence, merge_ranks):
+def encode_sentence(sentence, merge_ranks, special_tokens, add_special_tokens=True):
 
     all_tokens = []
 
@@ -149,6 +153,24 @@ def encode_sentence(sentence, merge_ranks):
         word_tokens = encode(word, merge_ranks)
 
         all_tokens.extend(word_tokens)
+    
+    if add_special_tokens:
+
+        all_tokens = (
+            [
+                special_tokens[
+                    "bos_token"
+                ]
+            ]
+            +
+            all_tokens
+            +
+            [
+                special_tokens[
+                    "eos_token"
+                ]
+            ]
+        )
 
     return all_tokens
 
@@ -210,7 +232,7 @@ def decode_tokens(tokens):
 
 if __name__ == "__main__":
 
-    merge_ranks, token_to_id, id_to_token = (
+    merge_ranks, token_to_id, id_to_token, special_tokens = (
         load_tokenizer()
     )
 
@@ -220,7 +242,8 @@ if __name__ == "__main__":
 
     tokens = encode_sentence(
         sentence,
-        merge_ranks
+        merge_ranks,
+        special_tokens
     )
 
     print("\nTOKENS:\n")

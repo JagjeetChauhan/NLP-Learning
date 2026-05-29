@@ -1,7 +1,7 @@
 from collections import defaultdict
 import re
 import json
-
+from config import SPECIAL_TOKENS
 
 # =========================================================
 # STEP 1: PREPROCESS SENTENCE
@@ -143,11 +143,8 @@ def train_bpe(corpus, num_merges=10):
 def build_token_vocab(
     final_vocab,
     merge_ranks,
-    special_tokens=None
+    special_tokens=SPECIAL_TOKENS
 ):
-
-    if special_tokens is None:
-        special_tokens = ["<pad>", "<unk>"]
 
     token_set = set()
 
@@ -171,7 +168,7 @@ def build_token_vocab(
 
         token_set.add(merged_token)
 
-    all_tokens = special_tokens + sorted(token_set)
+    all_tokens = list(special_tokens.values()) + sorted(token_set)
 
     token_to_id = {
         token: idx
@@ -185,33 +182,64 @@ def build_token_vocab(
 
     return token_to_id, id_to_token
 
+# =========================================================
+# GET SPECIAL TOKEN IDS
+# =========================================================
+
+def get_special_token_ids(
+    token_to_id,
+    special_tokens=SPECIAL_TOKENS
+):
+
+    ids = {}
+
+    for name, token in special_tokens.items():
+
+        ids[name] = token_to_id[token]
+
+    return ids
 
 # =========================================================
-# STEP 8: SAVE TOKENIZER
+# SAVE TOKENIZER
 # =========================================================
 
 def save_tokenizer(
     merge_ranks,
     token_to_id,
     id_to_token,
+    special_tokens=SPECIAL_TOKENS,
     filepath="tokenizer.json"
 ):
 
+    # tuple keys cannot be stored in JSON
     serializable_merges = {
 
         " ".join(pair): rank
 
-        for pair, rank in merge_ranks.items()
+        for pair, rank
+        in merge_ranks.items()
     }
+
 
     tokenizer_data = {
 
-        "merge_ranks": serializable_merges,
+        "merge_ranks":
+        serializable_merges,
 
-        "token_to_id": token_to_id,
 
-        "id_to_token": id_to_token
+        "token_to_id":
+        token_to_id,
+
+
+        "id_to_token":
+        id_to_token,
+
+
+        # NEW
+        "special_tokens":
+        special_tokens
     }
+
 
     with open(filepath, "w") as f:
 
@@ -221,8 +249,10 @@ def save_tokenizer(
             indent=4
         )
 
-    print(f"\nTokenizer saved to {filepath}")
 
+    print(
+        f"\nTokenizer saved to {filepath}"
+    )
 
 # =========================================================
 # MAIN
@@ -259,6 +289,14 @@ if __name__ == "__main__":
         final_vocab,
         merge_ranks
     )
+
+    special_ids = get_special_token_ids(
+        token_to_id
+    )
+
+    print("\nSPECIAL TOKEN IDS:\n")
+
+    print(special_ids)
 
     save_tokenizer(
         merge_ranks,

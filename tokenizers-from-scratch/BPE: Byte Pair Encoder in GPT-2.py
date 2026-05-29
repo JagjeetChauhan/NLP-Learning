@@ -19,6 +19,19 @@ import json
 #
 # =========================================================
 
+# =========================================================
+# SPECIAL TOKENS CONFIG
+# =========================================================
+SPECIAL_TOKENS = {
+
+            "pad_token": "<pad>",
+
+            "unk_token": "<unk>",
+
+            "bos_token": "<bos>",
+
+            "eos_token": "<eos>"
+}
 
 # =========================================================
 # STEP 1: PREPROCESS SENTENCE
@@ -446,7 +459,8 @@ def encode(word, merge_ranks):
 
 def encode_sentence(
     sentence,
-    merge_ranks
+    merge_ranks,
+    add_special_tokens=True
 ):
 
     all_tokens = []
@@ -461,6 +475,15 @@ def encode_sentence(
         )
 
         all_tokens.extend(word_tokens)
+    if add_special_tokens:
+
+        all_tokens = (
+            [SPECIAL_TOKENS["bos_token"]]
+            +
+            all_tokens
+            +
+            [SPECIAL_TOKENS["eos_token"]]
+        )
 
     return all_tokens
 
@@ -485,18 +508,41 @@ def encode_sentence(
 # Neural networks use numerical IDs.
 # =========================================================
 
+# =========================================================
+# GET SPECIAL TOKEN IDS
+# =========================================================
+
+def get_special_token_ids(
+    token_to_id,
+    special_tokens=SPECIAL_TOKENS
+):
+
+    ids = {}
+
+    for name, token in special_tokens.items():
+
+        ids[name] = token_to_id[token]
+
+    return ids
+
 def build_token_vocab(
     final_vocab,
     merge_ranks,
-    special_tokens=None
+    special_tokens=SPECIAL_TOKENS
 ):
 
     if special_tokens is None:
 
-        special_tokens = [
-            "<pad>",
-            "<unk>"
-        ]
+        SPECIAL_TOKENS = {
+
+            "pad_token": "<pad>",
+
+            "unk_token": "<unk>",
+
+            "bos_token": "<bos>",
+
+            "eos_token": "<eos>"
+        }
 
     token_set = set()
 
@@ -540,9 +586,17 @@ def build_token_vocab(
     # =====================================================
 
     all_tokens = (
-        special_tokens +
+        list(special_tokens.values()) + # Because now special tokens are Dictionary → values.
         sorted(token_set)
     )
+
+    ids = {}
+
+    for name, token in special_tokens.items():
+
+        ids[name] = token_to_id[token]
+
+    return ids
 
     # =====================================================
     # TOKEN -> ID
@@ -569,7 +623,6 @@ def build_token_vocab(
     }
 
     return token_to_id, id_to_token
-
 
 # =========================================================
 # STEP 10: TOKENS -> IDS

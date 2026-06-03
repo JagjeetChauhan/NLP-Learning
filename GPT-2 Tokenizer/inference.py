@@ -1,7 +1,7 @@
 import re
 import json
 from config import SPECIAL_TOKENS
-from tokenizer_utils import pad_sequence
+from tokenizer_utils import pad_sequence, truncate_sequence
 
 # =========================================================
 # STEP 1: PREPROCESS TEXT
@@ -262,7 +262,8 @@ if __name__ == "__main__":
     )
 
     sentence = (
-        "Hello! I am"
+        "Hello! I am at the lowest point on earth. "
+    "This tokenizer is learning truncation."
     )
 
     tokens = encode_sentence(
@@ -276,25 +277,81 @@ if __name__ == "__main__":
     print(tokens)
 
     ids = tokens_to_ids(
-        tokens,
-        token_to_id
-    )
-
-    ids = pad_sequence(
-        input_ids = ids,
-        max_length = 20,
-        pad_token_id = token_to_id["<pad>"]
+    tokens,
+    token_to_id
     )
 
     print(
-    "\nSEQUENCE LENGTH:"
+        "\nORIGINAL LENGTH:\n"
     )
 
     print(
         len(ids)
     )
 
-    print("\nTOKEN IDS:\n")
+    print(
+        "\nORIGINAL IDS:\n"
+    )
+
+    print(ids)
+
+
+    # =========================================================
+    # TRUNCATION
+    # =========================================================
+
+    ids = truncate_sequence(
+
+        input_ids=ids,
+
+        max_length=15,
+
+        eos_token_id=token_to_id[
+            "<eos>"
+        ]
+    )
+
+    print(
+        "\nLENGTH AFTER TRUNCATION:\n"
+    )
+
+    print(
+        len(ids)
+    )
+
+    print(
+        "\nTRUNCATED IDS:\n"
+    )
+
+    print(ids)
+
+
+    # =========================================================
+    # PADDING
+    # =========================================================
+
+    ids = pad_sequence(
+
+        input_ids=ids,
+
+        max_length=20,
+
+        pad_token_id=token_to_id[
+            "<pad>"
+        ]
+    )
+
+    print(
+        "\nFINAL LENGTH:\n"
+    )
+
+    print(
+        len(ids)
+    )
+
+    print(
+        "\nFINAL IDS:\n"
+    )
 
     print(ids)
 

@@ -531,19 +531,6 @@ def build_token_vocab(
     special_tokens=SPECIAL_TOKENS
 ):
 
-    if special_tokens is None:
-
-        SPECIAL_TOKENS = {
-
-            "pad_token": "<pad>",
-
-            "unk_token": "<unk>",
-
-            "bos_token": "<bos>",
-
-            "eos_token": "<eos>"
-        }
-
     token_set = set()
 
     # =====================================================
@@ -551,7 +538,6 @@ def build_token_vocab(
     # =====================================================
 
     for word in final_vocab:
-
         token_set.update(word)
 
     # =====================================================
@@ -586,17 +572,10 @@ def build_token_vocab(
     # =====================================================
 
     all_tokens = (
-        list(special_tokens.values()) + # Because now special tokens are Dictionary → values.
+        list(special_tokens.values())
+        +
         sorted(token_set)
     )
-
-    ids = {}
-
-    for name, token in special_tokens.items():
-
-        ids[name] = token_to_id[token]
-
-    return ids
 
     # =====================================================
     # TOKEN -> ID
@@ -613,7 +592,6 @@ def build_token_vocab(
     # =====================================================
     # ID -> TOKEN
     # =====================================================
-
     id_to_token = {
 
         idx: token
@@ -720,9 +698,101 @@ def decode_tokens(tokens):
 
     return text.strip()
 
+# =========================================================
+# STEP 13: PAD SEQUENCE
+# =========================================================
+#
+# Definition:
+# Makes sequence fixed length.
+#
+# Example:
+#
+# [2,10,20,3]
+#
+# max_length=8
+#
+# ->
+#
+# [2,10,20,3,0,0,0,0]
+#
+# =========================================================
+
+def pad_sequence(
+    input_ids,
+    max_length,
+    pad_token_id
+):
+
+    current_length = len(
+        input_ids
+    )
+
+    if current_length >= max_length:
+
+        return input_ids
+
+    padding_needed = (
+        max_length
+        -
+        current_length
+    )
+
+    return (
+        input_ids
+        +
+        [pad_token_id]
+        *
+        padding_needed
+    )
 
 # =========================================================
-# STEP 13: FULL SENTENCE -> IDS PIPELINE
+# STEP 14: TRUNCATE SEQUENCE
+# =========================================================
+#
+# Definition:
+# Shortens sequence when it exceeds
+# max_length.
+#
+# Preserves EOS token.
+#
+# Example:
+#
+# [2,10,20,30,40,50,3]
+#
+# max_length=5
+#
+# ->
+#
+# [2,10,20,30,3]
+#
+# =========================================================
+
+def truncate_sequence(
+    input_ids,
+    max_length,
+    eos_token_id=None
+):
+
+    if len(input_ids) <= max_length:
+
+        return input_ids
+
+    if eos_token_id is not None:
+
+        return (
+            input_ids[
+                : max_length - 1
+            ]
+            +
+            [eos_token_id]
+        )
+
+    return input_ids[
+        : max_length
+    ]
+
+# =========================================================
+# STEP 15: FULL SENTENCE -> IDS PIPELINE
 # =========================================================
 # Definition:
 # Full tokenizer pipeline.
@@ -764,7 +834,7 @@ def encode_sentence_ids(
 
 
 # =========================================================
-# STEP 14: SAVE TOKENIZER
+# STEP 16: SAVE TOKENIZER
 # =========================================================
 # Definition:
 # Saves tokenizer to disk.
@@ -835,7 +905,7 @@ def save_tokenizer(
 
 
 # =========================================================
-# STEP 15: LOAD TOKENIZER
+# STEP 17: LOAD TOKENIZER
 # =========================================================
 # Definition:
 # Loads tokenizer from disk.
@@ -1018,6 +1088,45 @@ if __name__ == "__main__":
     # =====================================================
     # IDS -> TOKENS
     # =====================================================
+
+    print("\nORIGINAL LENGTH:\n")
+
+    print(len(ids))
+
+
+    padded_ids = pad_sequence(
+
+        input_ids=ids,
+
+        max_length=50,
+
+        pad_token_id=token_to_id["<pad>"]
+    )
+
+    print("\nPADDED LENGTH:\n")
+
+    print(len(padded_ids))
+
+    print("\nPADDED IDS:\n")
+
+    print(padded_ids)
+
+    truncated_ids = truncate_sequence(
+
+    input_ids=ids,
+
+    max_length=15,
+
+    eos_token_id=token_to_id["<eos>"]
+    )
+
+    print("\nTRUNCATED LENGTH:\n")
+
+    print(len(truncated_ids))
+
+    print("\nTRUNCATED IDS:\n")
+
+    print(truncated_ids)
 
     recovered_tokens = ids_to_tokens(
         ids,

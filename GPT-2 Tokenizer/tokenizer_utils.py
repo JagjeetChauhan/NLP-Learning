@@ -5,6 +5,7 @@
 # Functions:
 #
 # 1. Padding
+# 2. Truncation
 #
 # Used after:
 #
@@ -13,6 +14,8 @@
 # tokens
 # ↓
 # input ids
+# ↓
+# truncation
 # ↓
 # padding
 #
@@ -75,3 +78,99 @@ def pad_sequence(
         )
     
     return input_ids
+
+# =========================================================
+# TRUNCATE SEQUENCE
+# =========================================================
+# Definition:
+# Reduces sequence length when it exceeds
+# max_length.
+#
+# Arguments:
+#
+# input_ids:
+# Numerical token ids
+#
+# max_length:
+# Desired sequence length
+#
+# eos_token_id:
+# ID of <eos>
+#
+#
+# Example:
+#
+# [2,10,20,30,40,50,3]
+#
+# max_length = 5
+#
+# ->
+#
+# [2,10,20,30,3]
+#
+# Why Needed?
+#
+# Transformers have fixed context windows.
+#
+# Example:
+#
+# GPT-2:
+# 1024 tokens
+#
+# If input exceeds max_length,
+# sequence must be shortened.
+#
+# Important:
+#
+# Preserve EOS token whenever possible.
+#
+# =========================================================
+
+def truncate_sequence(
+    input_ids,
+    max_length,
+    eos_token_id=None
+):
+
+    current_length = len(
+        input_ids
+    )
+
+    # No truncation required
+    if current_length <= max_length:
+
+        print(
+            "No truncation required"
+        )
+
+        return input_ids
+
+
+    print(
+        f"Truncating sequence from "
+        f"{current_length} to "
+        f"{max_length}"
+    )
+
+
+    # Preserve EOS token
+    if eos_token_id is not None:
+
+        truncated_ids = (
+
+            input_ids[
+                : max_length - 1
+            ]
+
+            +
+
+            [eos_token_id]
+        )
+
+        return truncated_ids
+
+
+    # Fallback truncation
+    return input_ids[
+        : max_length
+    ]

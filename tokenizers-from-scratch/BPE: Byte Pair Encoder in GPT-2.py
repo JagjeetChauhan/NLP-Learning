@@ -792,7 +792,54 @@ def truncate_sequence(
     ]
 
 # =========================================================
-# STEP 15: FULL SENTENCE -> IDS PIPELINE
+# STEP 15: CREATE ATTENTION MASK
+# =========================================================
+#
+# Definition:
+# Creates binary mask indicating
+# which tokens are real and which
+# are padding.
+#
+# Real Token:
+# 1
+#
+# Padding Token:
+# 0
+#
+#
+# Example:
+#
+# Input IDs:
+#
+# [2,10,20,3,0,0]
+#
+# pad_token_id = 0
+#
+#
+# Output:
+#
+# [1,1,1,1,0,0]
+#
+# =========================================================
+
+def create_attention_mask(
+    input_ids,
+    pad_token_id
+):
+
+    attention_mask = [
+
+        0 if token_id == pad_token_id
+
+        else 1
+
+        for token_id in input_ids
+    ]
+
+    return attention_mask
+
+# =========================================================
+# STEP 16: FULL SENTENCE -> IDS PIPELINE
 # =========================================================
 # Definition:
 # Full tokenizer pipeline.
@@ -834,7 +881,7 @@ def encode_sentence_ids(
 
 
 # =========================================================
-# STEP 16: SAVE TOKENIZER
+# STEP 17: SAVE TOKENIZER
 # =========================================================
 # Definition:
 # Saves tokenizer to disk.
@@ -905,7 +952,7 @@ def save_tokenizer(
 
 
 # =========================================================
-# STEP 17: LOAD TOKENIZER
+# STEP 18: LOAD TOKENIZER
 # =========================================================
 # Definition:
 # Loads tokenizer from disk.
@@ -1101,6 +1148,21 @@ if __name__ == "__main__":
         max_length=50,
 
         pad_token_id=token_to_id["<pad>"]
+    )
+
+    attention_mask = create_attention_mask(
+
+    input_ids=final_ids,
+
+    pad_token_id=token_to_id["<pad>"]
+    )
+
+    print(
+        "\nATTENTION MASK:\n"
+    )
+
+    print(
+        attention_mask
     )
 
     print("\nPADDED LENGTH:\n")

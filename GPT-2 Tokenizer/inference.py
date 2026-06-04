@@ -1,7 +1,7 @@
 import re
 import json
 from config import SPECIAL_TOKENS
-from tokenizer_utils import pad_sequence, truncate_sequence
+from tokenizer_utils import pad_sequence, truncate_sequence, create_attention_mask
 
 # =========================================================
 # STEP 1: PREPROCESS TEXT
@@ -354,6 +354,27 @@ if __name__ == "__main__":
     )
 
     print(ids)
+
+    # =========================================================
+    # ATTENTION MASK
+    # =========================================================
+
+    attention_mask = create_attention_mask(
+
+    input_ids=ids,
+
+    pad_token_id=token_to_id[
+        "<pad>"
+    ]
+    )
+
+    print(
+    "\nATTENTION MASK:\n"
+    )
+
+    print(
+        attention_mask
+    )
 
     recovered_tokens = ids_to_tokens(
         ids,

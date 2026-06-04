@@ -6,6 +6,7 @@
 #
 # 1. Padding
 # 2. Truncation
+# 3. Attention Mask
 #
 # Used after:
 #
@@ -18,10 +19,9 @@
 # truncation
 # ↓
 # padding
-#
+# ↓
+# Attention Mask
 # =========================================================
-
-
 
 # =========================================================
 # PAD SEQUENCE
@@ -174,3 +174,44 @@ def truncate_sequence(
     return input_ids[
         : max_length
     ]
+
+# =========================================================
+# CREATE ATTENTION MASK
+# =========================================================
+# Definition:
+# Creates binary attention mask.
+#
+# Real Token:
+# 1
+#
+# Padding Token:
+# 0
+#
+#
+# Example:
+#
+# Input:
+#
+# [2,10,20,3,0,0]
+#
+# Output:
+#
+# [1,1,1,1,0,0]
+#
+# =========================================================
+
+def create_attention_mask(
+    input_ids,
+    pad_token_id
+):
+
+    attention_mask = [
+
+        0 if token_id == pad_token_id
+
+        else 1
+
+        for token_id in input_ids
+    ]
+
+    return attention_mask

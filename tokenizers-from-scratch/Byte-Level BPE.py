@@ -142,6 +142,67 @@ def get_byte_pair_counts(
 
     return pair_counts
 
+# =========================================================
+# MERGE BYTE PAIR
+# =========================================================
+#
+# Replaces most frequent pair
+# with a new byte-level token.
+#
+# =========================================================
+
+def merge_byte_pair(
+    pair,
+    vocab,
+    new_token
+):
+
+    new_vocab = {}
+
+    for word, freq in vocab.items():
+
+        word = list(word)
+
+        i = 0
+
+        merged_word = []
+
+        while i < len(word):
+
+            if (
+
+                i < len(word) - 1
+
+                and
+
+                word[i] == pair[0]
+
+                and
+
+                word[i + 1] == pair[1]
+
+            ):
+
+                merged_word.append(
+                    str(new_token)
+                )
+
+                i += 2
+
+            else:
+
+                merged_word.append(
+                    word[i]
+                )
+
+                i += 1
+
+        new_vocab[
+            tuple(merged_word)
+        ] = freq
+
+    return new_vocab
+
 #=======================================Testing======================================================
 corpus = [
 

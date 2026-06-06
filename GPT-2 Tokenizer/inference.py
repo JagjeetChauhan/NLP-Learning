@@ -1,23 +1,16 @@
 import re
 import json
 from config import SPECIAL_TOKENS
-from tokenizer_utils import pad_sequence, truncate_sequence, create_attention_mask
+from tokenizer_utils import pad_sequence, truncate_sequence, create_attention_mask, regex_pre_tokenize
 
 # =========================================================
 # STEP 1: PREPROCESS TEXT
 # =========================================================
 
 def preprocess_text(sentence):
-
-    sentence = sentence.lower()
-
-    sentence = re.sub(r'([.,!?])', r' \1 ', sentence)
-
-    sentence = re.sub(r'\s+', ' ', sentence).strip()
-
-    words = sentence.split()
-
-    return words
+    return regex_pre_tokenize(
+        sentence
+    )
 
 
 # =========================================================
@@ -265,6 +258,9 @@ if __name__ == "__main__":
         "Hello! I am at the lowest point on earth. "
     "This tokenizer is learning truncation."
     )
+
+    print("ORIGINAL SENTENCE: ")
+    print(sentence)
 
     tokens = encode_sentence(
         sentence,

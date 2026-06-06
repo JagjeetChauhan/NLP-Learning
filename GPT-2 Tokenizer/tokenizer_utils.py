@@ -53,6 +53,8 @@
 #
 # =========================================================
 
+import re
+
 def pad_sequence(
     input_ids,
     max_length,
@@ -215,3 +217,47 @@ def create_attention_mask(
     ]
 
     return attention_mask
+
+# =========================================================
+# REGEX PRE-TOKENIZATION
+# =========================================================
+#
+# Definition:
+# Splits raw text into meaningful chunks
+# before BPE encoding.
+#
+# Examples:
+#
+# "Hello!!!"
+#
+# ->
+#
+# ["Hello", "!", "!", "!"]
+#
+#
+# "I'm learning NLP in 2026!"
+#
+# ->
+#
+# ["I", "'", "m", "learning",
+#  "NLP", "in", "2026", "!"]
+#
+# =========================================================
+
+def regex_pre_tokenize(text):
+
+    pattern = (
+
+        r"\d+"
+
+        r"|[A-Za-z]+"
+
+        r"|[^\w\s]"
+    )
+
+    tokens = re.findall(
+        pattern,
+        text
+    )
+
+    return tokens

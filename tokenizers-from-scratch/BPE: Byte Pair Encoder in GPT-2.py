@@ -60,29 +60,81 @@ SPECIAL_TOKENS = {
 # ['hello', ',', 'world', '!']
 # =========================================================
 
-def preprocess_text(sentence):
+# def preprocess_text(sentence):
 
-    # Lowercase
-    sentence = sentence.lower()
+#     # Lowercase
+#     sentence = sentence.lower()
 
-    # Separate punctuation
-    sentence = re.sub(
-        r'([.,!?])',
-        r' \1 ',
-        sentence
+#     # Separate punctuation
+#     sentence = re.sub(
+#         r'([.,!?])',
+#         r' \1 ',
+#         sentence
+#     )
+
+#     # Remove extra spaces
+#     sentence = re.sub(
+#         r'\s+',
+#         ' ',
+#         sentence
+#     ).strip()
+
+#     # Split into words
+#     words = sentence.split()
+
+#     return words
+
+# ----------------------------------------------------------------------------------
+
+# =========================================================
+# REGEX PRE-TOKENIZATION
+# =========================================================
+#
+# Definition:
+# Splits raw text into meaningful chunks
+# before BPE encoding.
+#
+# Examples:
+#
+# "Hello!!!"
+#
+# ->
+#
+# ["Hello", "!", "!", "!"]
+#
+#
+# "I'm learning NLP in 2026!"
+#
+# ->
+#
+# ["I", "'", "m", "learning",
+#  "NLP", "in", "2026", "!"]
+#
+# =========================================================
+
+def regex_pre_tokenize(text):
+
+    pattern = (
+
+        r"\d+"
+
+        r"|[A-Za-z]+"
+
+        r"|[^\w\s]"
     )
 
-    # Remove extra spaces
-    sentence = re.sub(
-        r'\s+',
-        ' ',
+    tokens = re.findall(
+        pattern,
+        text
+    )
+
+    return tokens
+
+def preprocess_text(sentence):
+
+    return regex_pre_tokenize(
         sentence
-    ).strip()
-
-    # Split into words
-    words = sentence.split()
-
-    return words
+    )
 
 
 # =========================================================

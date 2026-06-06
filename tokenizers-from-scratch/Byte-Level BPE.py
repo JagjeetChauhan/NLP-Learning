@@ -203,14 +203,108 @@ def merge_byte_pair(
 
     return new_vocab
 
+# =========================================================
+# TRAIN BYTE LEVEL BPE
+# =========================================================
+#
+# Learns byte-level merge rules.
+#
+# =========================================================
+
+def train_byte_bpe(
+    corpus,
+    num_merges
+):
+
+    vocab = build_byte_vocab(
+        corpus
+    )
+
+    merge_vocab = {}
+
+    merge_ranks = {}
+
+    next_token_id = 256
+
+
+    for rank in range(
+        num_merges
+    ):
+
+        pair_counts = (
+            get_byte_pair_counts(
+                vocab
+            )
+        )
+
+
+        if not pair_counts:
+
+            break
+
+
+        best_pair = max(
+
+            pair_counts,
+
+            key=pair_counts.get
+        )
+
+
+        print(
+
+            f"Step {rank+1}: "
+
+            f"Merging "
+
+            f"{best_pair}"
+
+            f" -> "
+
+            f"{next_token_id}"
+        )
+
+
+        merge_vocab[
+            next_token_id
+        ] = best_pair
+
+
+        merge_ranks[
+            best_pair
+        ] = rank
+
+
+        vocab = merge_byte_pair(
+
+            best_pair,
+
+            vocab,
+
+            next_token_id
+        )
+
+
+        next_token_id += 1
+
+
+    return (
+
+        vocab,
+
+        merge_vocab,
+
+        merge_ranks
+    )
+
 #=======================================Testing======================================================
 corpus = [
 
-    "low",
+    "hello",
 
-    "lowest",
+    "hello",
 
-    "newer"
+    "help"
 ]
 
 byte_vocab = build_byte_vocab(
@@ -242,3 +336,34 @@ for pair, count in sorted(
         "->",
         count
     )
+
+print("\nTraining Byte BPE: ")
+final_vocab, merge_vocab, merge_ranks = (
+
+    train_byte_bpe(
+
+        corpus,
+
+        num_merges=5
+    )
+)
+
+print(
+    "\nMERGE VOCAB:\n"
+)
+
+for token_id, pair in merge_vocab.items():
+
+    print(
+        token_id,
+        "->",
+        pair
+    )
+
+print(
+    "\nMERGE RANKS:\n"
+)
+
+print(
+    merge_ranks
+)

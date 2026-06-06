@@ -297,6 +297,165 @@ def train_byte_bpe(
         merge_ranks
     )
 
+# =========================================================
+# GET ADJACENT PAIRS
+# =========================================================
+
+def get_adjacent_pairs(tokens):
+
+    pairs = set()
+
+    for i in range(
+        len(tokens) - 1
+    ):
+
+        pairs.add(
+
+            (
+                tokens[i],
+
+                tokens[i+1]
+            )
+        )
+
+    return pairs
+
+# =========================================================
+# GET ADJACENT PAIRS
+# =========================================================
+
+def get_adjacent_pairs(tokens):
+
+    pairs = set()
+
+    for i in range(
+        len(tokens) - 1
+    ):
+
+        pairs.add(
+
+            (
+                tokens[i],
+
+                tokens[i+1]
+            )
+        )
+
+    return pairs
+
+# =========================================================
+# ENCODE BYTE TOKENS
+# =========================================================
+#
+# Applies learned merge ranks.
+#
+# =========================================================
+
+def encode_byte_tokens(
+
+    byte_tokens,
+
+    merge_ranks
+
+):
+
+    tokens = byte_tokens[:]
+
+
+    while True:
+
+        pairs = get_adjacent_pairs(
+            tokens
+        )
+
+
+        candidate_pairs = {
+
+            pair:
+            merge_ranks[pair]
+
+            for pair in pairs
+
+            if pair in merge_ranks
+        }
+
+
+        if not candidate_pairs:
+
+            break
+
+
+        best_pair = min(
+
+            candidate_pairs,
+
+            key=candidate_pairs.get
+        )
+
+
+        rank = merge_ranks[
+            best_pair
+        ]
+
+
+        print(
+
+            f"Merging "
+
+            f"{best_pair}"
+
+            f" rank={rank}"
+        )
+
+
+        new_token = str(
+            256 + rank
+        )
+
+
+        new_tokens = []
+
+        i = 0
+
+        while i < len(tokens):
+
+            if (
+
+                i < len(tokens)-1
+
+                and
+
+                (
+                    tokens[i],
+
+                    tokens[i+1]
+
+                ) == best_pair
+
+            ):
+
+                new_tokens.append(
+                    new_token
+                )
+
+                i += 2
+
+            else:
+
+                new_tokens.append(
+                    tokens[i]
+                )
+
+                i += 1
+
+
+        tokens = new_tokens
+
+
+    return tokens
+
+
+
 #=======================================Testing======================================================
 corpus = [
 
@@ -310,6 +469,9 @@ corpus = [
 byte_vocab = build_byte_vocab(
     corpus
 )
+
+print("\nCorpus:")
+print(corpus)
 
 for word, freq in byte_vocab.items():
 
@@ -367,3 +529,18 @@ print(
 print(
     merge_ranks
 )
+
+tokens = (
+    word_to_byte_tokens("hello")
+    + ["</w>"]
+)
+
+print("\nEcoded Tokens:")
+encoded = encode_byte_tokens(
+
+    tokens,
+
+    merge_ranks
+)
+
+print(encoded)

@@ -48,3 +48,14 @@ for word, tokens in splits.items():
 
 print("\nAll pairs:")
 print(pairs)
+
+pair_freq = {}
+
+for pair in pairs:
+    if pair in pair_freq:
+        pair_freq[pair] += 1
+    else:
+        pair_freq[pair] = 1
+
+print("\nPair Frequency:")
+print(pair_freq)

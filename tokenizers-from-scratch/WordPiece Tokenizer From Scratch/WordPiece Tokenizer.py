@@ -133,7 +133,16 @@ def build_word_frequencies(words):
 
     return word_frequencies
 
-# Step 3: Initial WordPiece Splits
+# Step 3: Build Initial Vocabulary
+def build_initial_vocab(splits):
+    vocab = set()
+
+    for tokens in splits.values():
+        vocab.update(tokens)
+    
+    return vocab
+
+# Step 4: Initial WordPiece Splits
 def build_initial_splits(word_frequencies):
 
     splits = {}
@@ -147,7 +156,7 @@ def build_initial_splits(word_frequencies):
 
     return splits
 
-# Step 4: Token Frequencies
+# Step 5: Token Frequencies
 def compute_token_frequencies(
     splits,
     word_frequencies
@@ -168,7 +177,7 @@ def compute_token_frequencies(
 
     return token_frequencies
 
-# Step 5: Pair Frequencies
+# Step 6: Pair Frequencies
 def compute_pair_frequencies(
     splits,
     word_frequencies
@@ -194,7 +203,7 @@ def compute_pair_frequencies(
 
     return pair_frequencies
 
-# Step 6: WordPiece Scores
+# Step 7: WordPiece Scores
 def compute_scores(
     pair_frequencies,
     token_frequencies
@@ -220,7 +229,7 @@ def compute_scores(
 
     return scores
 
-# Step 7: Best Pair
+# Step 8: Best Pair
 def find_best_pair(scores):
 
     best_pair = max(
@@ -232,7 +241,13 @@ def find_best_pair(scores):
 
     return best_pair, best_score
 
-# Step 8: Merge Pair
+# Step 9: Merge best pair into new token
+def merge_best_pair(best_pair):
+    a, b = best_pair
+    if b.startswith("##"):
+        return a + b.replace("##", "")
+
+# Step 10: Merge Pair
 def merge_pair(best_pair, splits):
     a, b = best_pair
 
@@ -267,6 +282,8 @@ splits = (
     build_initial_splits(word_frequencies)
 )
 
+vocab = build_initial_vocab(splits)
+
 token_frequencies = (
     compute_token_frequencies(
         splits,
@@ -290,27 +307,92 @@ best_pair, best_score = (
     find_best_pair(scores)
 )
 
+print("\nInitial Vocab")
+print(vocab)
+
+# First loop testing without training
+# new_token = merge_best_pair(best_pair)
+# vocab.add(new_token)
+# merged_pair = merge_pair(best_pair, splits)
+
+
+# Step 11: Training loop
+target_vocab_size = 20
+
+while len(vocab) < target_vocab_size:
+
+    token_frequencies = compute_token_frequencies(
+        splits,
+        word_frequencies
+    )
+
+    pair_frequencies = compute_pair_frequencies(
+        splits,
+        word_frequencies
+    )
+
+    scores = compute_scores(
+        pair_frequencies,
+        token_frequencies
+    )
+
+    if not scores:
+        print("No more pairs to merge.")
+        break
+
+    best_pair, best_score = (
+        find_best_pair(scores)
+    )
+
+    new_token = (
+        merge_best_pair(best_pair)
+    )
+
+    vocab.add(new_token)
+
+    splits = merge_pair(
+        best_pair,
+        splits
+    )
+
+    print(
+        f"Merged {best_pair} -> {new_token} -> {best_score}"
+    )
+
+token_frequencies = (
+    compute_token_frequencies(
+        splits,
+        word_frequencies
+    )
+)
+
+pair_frequencies = (
+    compute_pair_frequencies(
+        splits,
+        word_frequencies
+    )
+)
+
+scores = compute_scores(
+    pair_frequencies,
+    token_frequencies
+)
+
 print("Word Frequencies")
 print(word_frequencies)
 
-print("\nSplits")
+print("\nFinal Splits")
 print(splits)
 
-print("\nToken Frequencies")
+print("\nFinal Token Frequencies")
 print(token_frequencies)
 
-print("\nPair Frequencies")
+print("\nFinal Pair Frequencies")
 print(pair_frequencies)
 
-print("\nScores")
+print("\nFinal Scores")
 print(scores)
 
-print("\nBest Pair")
-print(best_pair)
-
-print("\nBest Score")
-print(best_score)
-
-print("\nMerged Pair")
-print(merge_pair(best_pair, splits))
+print("\nFinal Vocabulary")
+print(vocab)
     

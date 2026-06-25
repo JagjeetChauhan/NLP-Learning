@@ -396,6 +396,47 @@ def wordpiece_encode(word, vocab):
 
     return tokens
 
+sorted_vocab = sorted(vocab)
+
+token_to_id = {
+    token: idx
+    for idx, token in enumerate(sorted_vocab)
+}
+
+id_to_token = {
+    idx: token
+    for token, idx in token_to_id.items()
+}
+
+# Step 13: Encode to ids
+def encode_to_ids(word, vocab, token_to_id):
+
+    tokens = wordpiece_encode(word, vocab)
+
+    return [
+        token_to_id[token]
+        for token in tokens
+    ]
+
+# Step 14: Decode to text
+def decode_ids(ids, id_to_token):
+
+    tokens = [
+        id_to_token[id]
+        for id in ids
+    ]
+
+    word = ""
+
+    for token in tokens:
+
+        if token.startswith("##"):
+            word += token[2:]
+        else:
+            word += token
+
+    return word
+
 token_frequencies = (
     compute_token_frequencies(
         splits,
@@ -413,6 +454,17 @@ pair_frequencies = (
 scores = compute_scores(
     pair_frequencies,
     token_frequencies
+)
+
+encoded_word = encode_to_ids(
+    "slowers",
+    vocab,
+    token_to_id
+)
+
+decode_ids = decode_ids(
+    [88, 28],
+    id_to_token
 )
 
 word = "slowers"
@@ -453,4 +505,10 @@ for test_word in [
     "newests",
 ]:  
     print(test_word, "->", wordpiece_encode(test_word, vocab))
+
+print("\nEncode to ids")
+print(encoded_word)
+
+print("\nDecode_to_text")
+print(decode_ids)
     

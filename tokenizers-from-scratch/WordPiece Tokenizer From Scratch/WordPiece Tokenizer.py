@@ -108,8 +108,14 @@
 
 # Version 2 better Architecture:
 corpus = [
-    "low lower lowest",
-    "new newer newest",
+    "the low price became lower",
+    "the lowest price was accepted",
+    "the slow car became slower",
+    "the slowest car won the race",
+    "the new phone is newer",
+    "the newest phone arrived today",
+    "the wide road became wider",
+    "the widest road is downtown"
 ]
 
 # Step 1: Extract Words
@@ -245,7 +251,9 @@ def find_best_pair(scores):
 def merge_best_pair(best_pair):
     a, b = best_pair
     if b.startswith("##"):
-        return a + b.replace("##", "")
+        return a + b[2:]
+    
+    return a + b
 
 # Step 10: Merge Pair
 def merge_pair(best_pair, splits):
@@ -317,7 +325,7 @@ print(vocab)
 
 
 # Step 11: Training loop
-target_vocab_size = 20
+target_vocab_size = 160
 
 while len(vocab) < target_vocab_size:
 
@@ -359,6 +367,35 @@ while len(vocab) < target_vocab_size:
         f"Merged {best_pair} -> {new_token} -> {best_score}"
     )
 
+# Step 12: Encoding (Longest Match First)
+def wordpiece_encode(word, vocab):
+    tokens = []
+    start = 0
+
+    while start < len(word):
+        end = len(word)
+        cur_substr = None
+
+        while start < end:
+            piece = word[start:end]
+
+            if start > 0:
+                piece = "##" + piece
+
+            if piece in vocab:
+                cur_substr = piece
+                break
+
+            end -= 1
+
+        if cur_substr is None:
+            return ["[UNK]"]
+
+        tokens.append(cur_substr)
+        start = end
+
+    return tokens
+
 token_frequencies = (
     compute_token_frequencies(
         splits,
@@ -378,6 +415,9 @@ scores = compute_scores(
     token_frequencies
 )
 
+word = "slowers"
+encoding_word = wordpiece_encode(word, vocab)
+
 print("Word Frequencies")
 print(word_frequencies)
 
@@ -395,4 +435,22 @@ print(scores)
 
 print("\nFinal Vocabulary")
 print(vocab)
+
+print("\nWord")
+print(word)
+
+print("\nEncoding")
+print(encoding_word)
+
+print("\nSorted Vocab")
+print(sorted(vocab))
+
+for test_word in [
+    "slowers",
+    "newers",
+    "widers",
+    "slowests",
+    "newests",
+]:  
+    print(test_word, "->", wordpiece_encode(test_word, vocab))
     

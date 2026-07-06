@@ -113,3 +113,18 @@ print(pair_stats)
 print()
 print(best_pair)
 print(new_corpus)
+
+target_vocab_size = 25
+while len(vocab) < target_vocab_size:
+
+    pairs = pair_statistics(corpus)
+
+    best_pair = best_pair_in_vocab(pairs)
+
+    corpus = merge_pair(corpus, best_pair)
+
+    vocab.append(best_pair[0] + best_pair[1])
+
+    print(f"Merge: {best_pair}")
+    print(corpus)
+    print("-" * 40)

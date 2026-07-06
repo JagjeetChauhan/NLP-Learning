@@ -43,4 +43,27 @@ def Initial_vocab(sentence_list):
 
     return Initial_vocab_list
 
-print(Initial_vocab(vocab))
+vocab_list = Initial_vocab(vocab)
+
+"""
+Stage 3 — Pair statistics
+Count adjacent symbol pairs over the full sentence
+"""
+from collections import defaultdict
+
+def pair_statistics(sentences):
+    pair_count = defaultdict(int)
+
+    for sentence in sentences:
+        chars = list(sentence)
+
+        for i in range(len(chars) - 1):
+            pair = (chars[i], chars[i + 1])
+            pair_count[pair] += 1
+
+    return dict(pair_count)
+
+pairs = pair_statistics(vocab)
+
+for pair, count in pairs.items():
+    print(pair, ":", count)

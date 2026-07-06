@@ -14,11 +14,6 @@ def Text_preprocess_test(sentence):
         
     return result
 
-sentence = ["Hello I am Luv",
-           "I am studing"]
-vocab = Text_preprocess_test(sentence)
-print(vocab)
-
 def Text_preprocess(sentences):
     result = []
 
@@ -26,9 +21,6 @@ def Text_preprocess(sentences):
         result.append(sentence.replace(" ", "▁"))
 
     return result
-
-vocab = Text_preprocess(sentence)
-print(vocab)
 
 """
 Stage 2 — Initial vocabulary
@@ -42,8 +34,6 @@ def Initial_vocab(sentence_list):
                 Initial_vocab_list.append(ch)
 
     return Initial_vocab_list
-
-vocab_list = Initial_vocab(vocab)
 
 """
 Stage 3 — Pair statistics
@@ -63,7 +53,63 @@ def pair_statistics(sentences):
 
     return dict(pair_count)
 
-pairs = pair_statistics(vocab)
+"""
+Stage 4 — BPE merges
+Merge the most frequent pair repeatedly until reaching the target vocabulary size
+"""
+def best_pair_in_vocab(pairs_list):
+    best_pair = max(pairs_list, key=pairs_list.get)
+    return best_pair
 
-for pair, count in pairs.items():
-    print(pair, ":", count)
+def merge_pair(corpus, pair):
+    """
+    corpus: List[List[str]]
+    pair: ('a', 'm')
+
+    returns updated corpus
+    """
+
+    merged_corpus = []
+    new_token = pair[0] + pair[1]
+
+    for sentence in corpus:
+        new_sentence = []
+
+        i = 0
+        while i < len(sentence):
+
+            if (
+                i < len(sentence) - 1
+                and sentence[i] == pair[0]
+                and sentence[i + 1] == pair[1]
+            ):
+                new_sentence.append(new_token)
+                i += 2
+            else:
+                new_sentence.append(sentence[i])
+                i += 1
+
+        merged_corpus.append(new_sentence)
+
+    return merged_corpus
+
+vocab = ["I love NLP","I like New York","I love CV"]
+updated_vocab = Text_preprocess(vocab)
+corpus = [list(sentence) for sentence in updated_vocab]
+print(corpus)
+
+Initial_vocab_list = Initial_vocab(updated_vocab)
+pair_stats = pair_statistics(updated_vocab)
+best_pair = best_pair_in_vocab(pair_stats)
+
+new_corpus = merge_pair(corpus, best_pair)
+
+print()
+print(Initial_vocab_list)
+
+print()
+print(pair_stats)
+
+print()
+print(best_pair)
+print(new_corpus)

@@ -93,6 +93,44 @@ def merge_pair(corpus, pair):
 
     return merged_corpus
 
+"""
+Stage 5 — Encoding
+Encode new sentences using the learned merges
+"""
+def build_token_vocab(final_vocab, special_tokens=None):
+
+    if special_tokens is None:
+
+        special_tokens = ["<pad>", "<unk>"]
+
+    token_set = set()
+
+    # Collect learned tokens
+    for word in final_vocab:
+
+        token_set.update(word)
+
+    # Combine special + learned tokens
+    all_tokens = special_tokens + sorted(token_set)
+
+    # token -> id
+    token_to_id = {
+
+        token: idx
+
+        for idx, token in enumerate(all_tokens)
+    }
+
+    # id -> token
+    id_to_token = {
+
+        idx: token
+
+        for token, idx in token_to_id.items()
+    }
+
+    return token_to_id, id_to_token
+
 vocab = ["I love NLP","I like New York","I love CV"]
 updated_vocab = Text_preprocess(vocab)
 corpus = [list(sentence) for sentence in updated_vocab]
@@ -128,3 +166,9 @@ while len(vocab) < target_vocab_size:
     print(f"Merge: {best_pair}")
     print(corpus)
     print("-" * 40)
+
+print()
+print(F"Final Corpus: {corpus}")
+
+print()
+print(build_token_vocab(corpus))

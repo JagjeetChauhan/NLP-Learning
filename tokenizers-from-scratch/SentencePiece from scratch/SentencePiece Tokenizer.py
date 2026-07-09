@@ -131,44 +131,112 @@ def build_token_vocab(final_vocab, special_tokens=None):
 
     return token_to_id, id_to_token
 
-vocab = ["I love NLP","I like New York","I love CV"]
-updated_vocab = Text_preprocess(vocab)
-corpus = [list(sentence) for sentence in updated_vocab]
-print(corpus)
+def encode_word(word, merges):
 
-Initial_vocab_list = Initial_vocab(updated_vocab)
-pair_stats = pair_statistics(updated_vocab)
-best_pair = best_pair_in_vocab(pair_stats)
+    tokens = list(word)
 
-new_corpus = merge_pair(corpus, best_pair)
+    for pair in merges:
 
-print()
-print(Initial_vocab_list)
+        new_tokens = []
 
-print()
-print(pair_stats)
+        i = 0
 
-print()
-print(best_pair)
-print(new_corpus)
+        while i < len(tokens):
 
-target_vocab_size = 25
-while len(vocab) < target_vocab_size:
+            if (
+                i < len(tokens) - 1 and
+                (tokens[i], tokens[i + 1]) == pair
+            ):
 
+                new_tokens.append(
+                    tokens[i] + tokens[i + 1]
+                )
+
+                i += 2
+
+            else:
+
+                new_tokens.append(tokens[i])
+
+                i += 1
+
+        tokens = new_tokens
+
+    return tokens
+
+def encode_sentence(sentence, merges):
+
+    sentence = sentence.replace(" ", "▁")
+
+    return encode_word(sentence, merges)
+
+def token_to_ids(tokens, token_to_id):
+    unk_id = token_to_id["<unk>"]
+    return [
+
+        token_to_id.get(token, unk_id)
+
+        for token in tokens
+    ]
+
+"""
+Stage 6 — Decoding
+Join pieces and convert ▁ back to spaces
+"""
+
+sentences = [
+    "I love natural language processing",
+    "I love machine learning",
+    "I like deep learning",
+    "She likes machine learning",
+    "He loves natural language",
+    "Natural language is interesting",
+    "Deep learning is powerful",
+    "Machine learning uses data",
+    "I enjoy reading books",
+    "She enjoys reading articles",
+    "The cat sits on the mat",
+    "The dog sits near the cat",
+    "New York is a big city",
+    "I visited New York last year",
+    "Artificial intelligence is changing the world"
+]
+
+processed = Text_preprocess(sentences)
+corpus = [list(s) for s in processed]
+
+initial_vocab = Initial_vocab(processed)
+current_vocab_size = len(initial_vocab)
+
+merges = []
+
+target_vocab_size = 60
+while current_vocab_size < target_vocab_size:
     pairs = pair_statistics(corpus)
-
     best_pair = best_pair_in_vocab(pairs)
-
+    merges.append(best_pair)
     corpus = merge_pair(corpus, best_pair)
-
-    vocab.append(best_pair[0] + best_pair[1])
+    current_vocab_size += 1
 
     print(f"Merge: {best_pair}")
     print(corpus)
     print("-" * 40)
 
 print()
-print(F"Final Corpus: {corpus}")
+print(f"Final Corpus: {corpus}")
+
+print(f"\nFinal Merges: {merges}")
 
 print()
-print(build_token_vocab(corpus))
+token_to_id, id_to_token = build_token_vocab(corpus)
+
+print(f"\nToken to Ids: {token_to_id}")
+print(f"\nIds to Token: {id_to_token}")
+
+sentence = "Hello! I am at the lowest point on earth."
+
+tokens = encode_sentence(sentence, merges)
+
+print("\nENCODED TOKENS:\n")
+
+print(tokens)

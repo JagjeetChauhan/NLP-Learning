@@ -45,10 +45,10 @@ def pair_statistics(sentences):
     pair_count = defaultdict(int)
 
     for sentence in sentences:
-        chars = list(sentence)
+        tokens = list(sentence)
 
-        for i in range(len(chars) - 1):
-            pair = (chars[i], chars[i + 1])
+        for i in range(len(tokens) - 1):
+            pair = (tokens[i], tokens[i + 1])
             pair_count[pair] += 1
 
     return dict(pair_count)
@@ -97,37 +97,21 @@ def merge_pair(corpus, pair):
 Stage 5 — Encoding
 Encode new sentences using the learned merges
 """
-def build_token_vocab(final_vocab, special_tokens=None):
+def build_token_vocab(corpus, special_tokens=None):
 
     if special_tokens is None:
-
         special_tokens = ["<pad>", "<unk>"]
 
     token_set = set()
 
-    # Collect learned tokens
-    for word in final_vocab:
+    for sentence in corpus:
+        for token in sentence:
+            token_set.add(token)
 
-        token_set.update(word)
-
-    # Combine special + learned tokens
     all_tokens = special_tokens + sorted(token_set)
 
-    # token -> id
-    token_to_id = {
-
-        token: idx
-
-        for idx, token in enumerate(all_tokens)
-    }
-
-    # id -> token
-    id_to_token = {
-
-        idx: token
-
-        for token, idx in token_to_id.items()
-    }
+    token_to_id = {t:i for i,t in enumerate(all_tokens)}
+    id_to_token = {i:t for t,i in token_to_id.items()}
 
     return token_to_id, id_to_token
 
@@ -179,28 +163,46 @@ def token_to_ids(tokens, token_to_id):
         for token in tokens
     ]
 
+def ids_to_tokens(ids, id_to_token):
+
+    return [
+
+        id_to_token[i]
+
+        for i in ids
+    ]
+
 """
 Stage 6 — Decoding
 Join pieces and convert ▁ back to spaces
 """
+def decode_tokens(tokens):
+    return "".join(tokens).replace("▁", " ")
+
+
 
 sentences = [
-    "I love natural language processing",
-    "I love machine learning",
-    "I like deep learning",
-    "She likes machine learning",
-    "He loves natural language",
-    "Natural language is interesting",
-    "Deep learning is powerful",
-    "Machine learning uses data",
-    "I enjoy reading books",
-    "She enjoys reading articles",
-    "The cat sits on the mat",
-    "The dog sits near the cat",
-    "New York is a big city",
-    "I visited New York last year",
-    "Artificial intelligence is changing the world"
-]
+    "Natural language processing enables computers to understand human language.",
+    "Machine learning algorithms improve with experience.",
+    "Deep learning is a subset of machine learning.",
+    "Artificial intelligence is transforming many industries.",
+    "Large language models generate human like text.",
+    "Neural networks are inspired by the human brain.",
+    "Data science combines statistics programming and domain knowledge.",
+    "Python is a popular programming language.",
+    "Tokenization is the first step of many NLP pipelines.",
+    "Byte Pair Encoding builds subword vocabularies.",
+    "Language models predict the next token.",
+    "Students enjoy learning artificial intelligence.",
+    "Researchers publish papers on natural language processing.",
+    "Computers process millions of words every day.",
+    "Reading books improves vocabulary and comprehension.",
+    "The weather is pleasant today.",
+    "The dog chased the cat across the garden.",
+    "The children played football after school.",
+    "She enjoys reading novels every evening.",
+    "He studies computer science at university.",
+] * 200
 
 processed = Text_preprocess(sentences)
 corpus = [list(s) for s in processed]
@@ -210,13 +212,31 @@ current_vocab_size = len(initial_vocab)
 
 merges = []
 
-target_vocab_size = 60
-while current_vocab_size < target_vocab_size:
+def get_vocab(corpus):
+    vocab = set()
+
+    for sentence in corpus:
+        vocab.update(sentence)
+
+    return vocab
+
+target_vocab_size = 200
+vocab = get_vocab(sentences)
+
+while len(vocab) < target_vocab_size:
+
     pairs = pair_statistics(corpus)
-    best_pair = best_pair_in_vocab(pairs)
+
+    if not pairs:
+        break
+
+    best_pair = max(pairs, key=pairs.get)
+
     merges.append(best_pair)
+
     corpus = merge_pair(corpus, best_pair)
-    current_vocab_size += 1
+
+    vocab = get_vocab(corpus)
 
     print(f"Merge: {best_pair}")
     print(corpus)
@@ -240,3 +260,19 @@ tokens = encode_sentence(sentence, merges)
 print("\nENCODED TOKENS:\n")
 
 print(tokens)
+
+ids = token_to_ids(tokens, token_to_id)
+
+print("\nTOKEN IDS:\n")
+
+print(ids)
+
+recovered_tokens = ids_to_tokens(ids, id_to_token)
+print("\nTOKENS:\n")
+print(recovered_tokens)
+
+decoded_text = decode_tokens(recovered_tokens)
+
+print("\nDECODED TEXT:\n")
+
+print(decoded_text)

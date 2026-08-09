@@ -1,5 +1,6 @@
 import numpy as np
 
+# One Hot Encoding
 vocab = {
     "cat": 0,
     "dog": 1,
@@ -27,3 +28,21 @@ print("cat · apple =", np.dot(cat, apple))
 
 print("Distance(cat, dog) =", np.linalg.norm(cat - dog))
 print("Distance(cat, apple) =", np.linalg.norm(cat - apple))
+
+# Embedding Layer
+vocab_size = 10
+embedding_dim = 4 # No. of Features
+
+embedding_matrix = np.random.randn(vocab_size, embedding_dim)
+
+print(embedding_matrix.shape)
+print(embedding_matrix)
+
+# Embedding Lookup -> Forward Pass
+token = 5
+vector = embedding_matrix[token]
+print(vector)
+
+tokens = np.array([4,5,6])
+vectors = embedding_matrix[tokens]
+print(vectors)

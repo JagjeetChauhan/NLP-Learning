@@ -41,8 +41,15 @@ print(embedding_matrix)
 # Embedding Lookup -> Forward Pass
 token = 5
 vector = embedding_matrix[token]
+print("Single Word")
 print(vector)
 
 tokens = np.array([4,5,6])
 vectors = embedding_matrix[tokens]
+print("Single Sentence")
 print(vectors)
+
+batch_sentences = np.array([[4,5,6],[7,8,9]])
+vector_sentence = embedding_matrix[batch_sentences]
+print("Batch of Sentences")
+print(vector_sentence)

@@ -1,0 +1,14 @@
+the cat sat on the mat
+the cat ate the food
+the cat likes the food
+the dog sat on the mat
+the dog ate the food
+the dog likes the cat
+the boy sat on the chair
+the boy ate the food
+the girl sat on the chair
+the girl likes the cat
+the girl likes the dog
+the dog likes the boy
+the cat likes the boy
+the boy likes the girl

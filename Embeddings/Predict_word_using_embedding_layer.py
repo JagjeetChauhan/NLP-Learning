@@ -1,7 +1,7 @@
 with open("/workspaces/NLP-Learning/Embeddings/data.txt", "r", encoding="utf-8") as f:
     text = f.read()
 
-print(text)
+# print(text)
 
 #-------------------------------
 # Create a vocabulary
@@ -100,10 +100,10 @@ criterion = nn.CrossEntropyLoss()
 #Optimizer:
 optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.001
+    lr=0.01
 )
 
-epochs = 20
+epochs = 200
 
 for epoch in range(epochs):
 
@@ -174,4 +174,41 @@ def similar_words(word, n=10):
 
     return results[:n]
 
-similar_words("sat")
+print(similar_words("young"))
+
+def generate_sentence(start_word, model, max_words=20):
+
+    start_word = start_word.lower()
+
+    if start_word not in word_to_id:
+        return f"Word '{start_word}' is not in the vocabulary."
+
+    words = [start_word]
+
+    for _ in range(max_words - 1):
+
+        # Get ID of the current word
+        current_word = words[-1]
+        current_id = word_to_id[current_word]
+
+        # Convert to tensor
+        input_tensor = torch.tensor(
+            [current_id],
+            dtype=torch.long
+        )
+
+        # Predict next word
+        with torch.no_grad():
+            scores = model(input_tensor)
+
+        # Get the word with highest score
+        predicted_id = scores.argmax(dim=1).item()
+
+        # Convert ID back to word
+        next_word = id_to_word[predicted_id]
+
+        words.append(next_word)
+
+    return " ".join(words)
+
+print(generate_sentence("the", model))

@@ -178,4 +178,17 @@ def generate_sentence(word1, word2, model, max_words=20):
 
     return " ".join(words)
 
-print(generate_sentence("today", "is", model))
+print(generate_sentence("the", "artist", model))
+
+test_pairs = [
+    ("the", "artist"),
+    ("artist", "bought"),
+    ("artist", "called"),
+    ("artist", "cleaned"),
+    ("artist", "fixed"),
+    ("artist", "visited"),
+]
+
+for word1, word2 in test_pairs:
+    prediction = predict_next_word(word1, word2)
+    print(f"{word1} + {word2} -> {prediction}")
